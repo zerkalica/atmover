@@ -1,0 +1,11 @@
+[ignore]
+.*fbjs.*
+
+[options]
+munge_underscores=true
+esproposal.decorators=ignore
+esproposal.class_static_fields=enable
+esproposal.class_instance_fields=enable
+module.name_mapper='^atomizer/\(.*\)' -> '<PROJECT_ROOT>/src/\1'
+suppress_comment=\\(.\\|\n\\)*\\$FlowIssue
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe

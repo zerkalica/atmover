@@ -1,0 +1,14 @@
+{
+    "presets": ["es2015-loose", "stage-0"],
+    "plugins": [
+        ["module-resolver", {
+            "root": [""],
+            "alias": {
+                "atomizer": "./src"
+            }
+        }],
+        "syntax-flow",
+        "espower",
+        "transform-flow-strip-types"
+    ]
+}

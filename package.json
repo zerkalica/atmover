@@ -1,0 +1,74 @@
+{
+  "name": "atomizer",
+  "version": "1.0.0",
+  "description": "Abstraction layer on top of mobx, cellx, derivable with hot reload support",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "config": {
+    "builddir": "."
+  },
+  "scripts": {
+    "prepublish": "npm run build",
+    "preversion": "npm test",
+    "postversion": "git push && git push --tags",
+    "prepush": "npm test",
+    "clean": "rm -rf $npm_package_config_builddir/dist",
+    "build": "npm run clean && babel src --ignore=__tests__ --source-maps --out-dir $npm_package_config_builddir/dist",
+    "build.dev": "npm run build -- --watch",
+    "lint": "eslint .",
+    "check": "flow check",
+    "testonly": "mocha",
+    "test": "eslint . && flow check && mocha",
+    "test.dev": "mocha --growl --watch"
+  },
+  "author": "Stefan Zerkalica <zerkalica@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/zerkalica/atomizer.git"
+  },
+  "keywords": [
+    "mobx",
+    "cellx",
+    "derivable",
+    "atom",
+    "reactive",
+    "state",
+    "hot",
+    "live"
+  ],
+  "files": [
+    "*.map",
+    "*.js",
+    "*.flow",
+    ".flowconfig",
+    "README.md",
+    "LICENSE",
+    "src",
+    "flow-typed",
+    "dist"
+  ],
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-core": "^6.18.0",
+    "babel-loader": "^6.2.7",
+    "babel-plugin-espower": "^2.3.1",
+    "babel-plugin-module-resolver": "^2.2.0",
+    "babel-plugin-syntax-decorators": "^6.13.0",
+    "babel-plugin-syntax-flow": "^6.18.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-flow-strip-types": "^6.18.0",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-es2015-loose": "^8.0.0",
+    "babel-preset-stage-0": "^6.16.0",
+    "derivable": "^0.12.1",
+    "eslint-config-airplus": "^2.0.7",
+    "flow-bin": "^0.34.0",
+    "glob": "^7.1.1",
+    "husky": "^0.11.9",
+    "mocha": "^3.1.2",
+    "power-assert": "^1.4.1",
+    "sinon": "^1.17.6"
+  }
+}
