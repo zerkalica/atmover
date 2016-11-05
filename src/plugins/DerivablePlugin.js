@@ -1,8 +1,7 @@
 // @flow
 
-import type {Atom, Atomizer, CreateInstance, BaseGet, BaseAtom} from '../interfaces'
+import type {Atom, Transact, CreateInstance, BaseGet, BaseAtom} from '../interfaces'
 import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
-import BaseAtomizer from '../BaseAtomizer'
 
 interface LifeCycle {
     until?: Derivable<boolean>;
@@ -99,7 +98,6 @@ class DerivableValueAtom<V: Object> {
     get(): V {
         return this._value.get()
     }
-
     subscribe(fn: (v: V) => void): () => void {
         const until = this._createAtom(false)
         this._value.react(fn, {
@@ -113,26 +111,24 @@ class DerivableValueAtom<V: Object> {
     }
 }
 
-export default function createDerivableAtomizer<V: Object>(
-    derivable: DerivableJS,
-    isHotReplace: boolean
-): Atomizer {
-    function createDerivableAtom(
+export default class MobxPlugin {
+    _derivable: DerivableJS
+    transact: Transact
+
+    constructor(derivable: DerivableJS) {
+        this._derivable = derivable
+        this.transact = derivable.transact
+    }
+
+    createInstanceAtom<V: Object>(
         create: CreateInstance<V>,
         protoAtom: BaseGet<Function>,
         argsAtom: BaseAtom<mixed[]>
     ): Atom<V> {
-        return new DerivableInstanceAtom(derivable, create, protoAtom, argsAtom)
+        return new DerivableInstanceAtom(this._derivable, create, protoAtom, argsAtom)
     }
 
-    function createAtom(value: V): Atom<V> {
-        return new DerivableValueAtom(derivable, value)
+    createValueAtom<V: Object>(value: V): Atom<V> {
+        return new DerivableValueAtom(this._derivable, value)
     }
-
-    return new BaseAtomizer(
-        createDerivableAtom,
-        derivable.transact,
-        createAtom,
-        isHotReplace
-    )
 }

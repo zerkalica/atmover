@@ -1,11 +1,11 @@
 // @flow
 
-import DerivableAtomizer from './plugins/DerivableAtomizer'
+import DerivablePlugin from './plugins/DerivablePlugin'
 import getAtom from './getAtom'
 
 export {
     getAtom,
-    DerivableAtomizer
+    DerivablePlugin
 }
 
 export {

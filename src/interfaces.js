@@ -17,19 +17,22 @@ export type Fn<V: Object> = (...args: any) => V
 
 export type Transact = (fn: () => void) => void
 
-export type CreateValueAtom<V> = (v: V) => Atom<V>
-
 export type CreateInstance<V> = (proto: Function, args: mixed[]) => V
 
-export type CreateProtoAtom<V> = (
-    create: CreateInstance<V>,
-    protoAtom: BaseGet<Function>,
-    argsAtom: BaseAtom<mixed[]>
-) => Atom<V>
+export interface AtomizerPlugin {
+    createInstanceAtom<V: Object>(
+        create: CreateInstance<V>,
+        protoAtom: BaseGet<Function>,
+        argsAtom: BaseAtom<mixed[]>
+    ): Atom<V>;
+    createValueAtom<V: Object>(value: V): Atom<V>;
+    transact: Transact;
+}
 
 export interface Atomizer {
     transact: Transact;
-    value: CreateValueAtom<*>;
+
+    value<V: Object>(v: V): Atom<V>;
 
     replaceProto(from: Function, to: Function): void;
 
@@ -39,6 +42,7 @@ export interface Atomizer {
     constructComputed<V: Object>(p: Class<V>, args?: BaseAtom<*>[]): Atom<V>;
     factoryComputed<V: Object>(p: Fn<V>, args?: BaseAtom<*>[]): Atom<V>;
 }
+
 
 export interface ProtoCache<V> {
     set(key: V, value: V): void;

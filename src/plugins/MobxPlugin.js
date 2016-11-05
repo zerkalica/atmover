@@ -1,8 +1,7 @@
 // @flow
 
-import type {Atom, Atomizer, CreateInstance, BaseGet, BaseAtom} from '../interfaces'
+import type {Atom, CreateInstance, BaseGet, BaseAtom, Transact} from '../interfaces'
 import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
-import BaseAtomizer from '../BaseAtomizer'
 
 interface MobxAtom<V> {
     get(): V;
@@ -95,23 +94,24 @@ class MobxInstanceAtom<V: Object> {
     }
 }
 
-export default function createMobxAtomizer<V: Object>(mobx: Mobx, isHotReplace: boolean): Atomizer {
-    function createMobxAtom(
+export default class MobxPlugin {
+    _mobx: Mobx
+    transact: Transact
+
+    constructor(mobx: Mobx) {
+        this._mobx = mobx
+        this.transact = mobx.transaction
+    }
+
+    createInstanceAtom<V: Object>(
         create: CreateInstance<V>,
         protoAtom: BaseGet<Function>,
         argsAtom: BaseAtom<mixed[]>
     ): Atom<V> {
-        return new MobxInstanceAtom(mobx, create, protoAtom, argsAtom)
+        return new MobxInstanceAtom(this._mobx, create, protoAtom, argsAtom)
     }
 
-    function createAtom(value: V): Atom<V> {
-        return new MobxValueAtom(mobx, value)
+    createValueAtom<V: Object>(value: V): Atom<V> {
+        return new MobxValueAtom(this._mobx, value)
     }
-
-    return new BaseAtomizer(
-        createMobxAtom,
-        mobx.transaction,
-        createAtom,
-        isHotReplace
-    )
 }

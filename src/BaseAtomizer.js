@@ -1,6 +1,6 @@
 // @flow
 
-import type {Transact, Atom, Atomizer, Fn, CreateProtoAtom, CreateValueAtom, ProtoCache, BaseAtom} from './interfaces'
+import type {Transact, Atom, Atomizer, Fn, AtomizerPlugin, ProtoCache, BaseAtom} from './interfaces'
 import {fastCreateObject, fastCall} from './fastCreate'
 
 class ArgsBaseAtom {
@@ -53,17 +53,17 @@ class FakeProtoCache<V> {
 
 class MapProtoCache<V> {
     _protos: Map<V, BaseAtom<V>> = new Map()
-    _atomize: CreateValueAtom<V>
+    _plugin: AtomizerPlugin
 
-    constructor(atomize: CreateValueAtom<V>) {
-        this._atomize = atomize
+    constructor(plugin: AtomizerPlugin) {
+        this._plugin = plugin
     }
 
     get(key: V): BaseAtom<V> {
         const protos = this._protos
         let atom: ?BaseAtom<V> = protos.get(key)
         if (!atom) {
-            atom = this._atomize(key)
+            atom = this._plugin.createValueAtom(key)
             protos.set(key, atom)
         }
 
@@ -79,24 +79,24 @@ class MapProtoCache<V> {
 }
 
 export default class BaseAtomizer {
-    _atomizeProto: CreateProtoAtom<any>
+    _plugin: AtomizerPlugin
     _protoCache: ProtoCache<Function>
 
     transact: Transact
-    value: CreateValueAtom<any>
 
     constructor(
-        atomizeProto: CreateProtoAtom<*>,
-        transact: Transact,
-        atomize: CreateValueAtom<*>,
+        plugin: AtomizerPlugin,
         isHotReplace?: boolean
     ) {
-        this._atomizeProto = atomizeProto
-        this.value = atomize
-        this.transact = transact
+        this._plugin = plugin
+        this.transact = plugin.transact
         this._protoCache = isHotReplace
-            ? new MapProtoCache(atomize)
+            ? new MapProtoCache(plugin)
             : new FakeProtoCache()
+    }
+
+    value<V: Object>(v: V): Atom<V> {
+        return this._plugin.createValueAtom(v)
     }
 
     replaceProto(from: Function, to: Function): void {
@@ -104,7 +104,7 @@ export default class BaseAtomizer {
     }
 
     construct<V: Object>(p: Class<V>, args?: mixed[]): Atom<V> {
-        return this._atomizeProto(
+        return this._plugin.createInstanceAtom(
             fastCreateObject,
             this._protoCache.get(p),
             args ? this.value(args) : new ArgsBaseAtom()
@@ -112,7 +112,7 @@ export default class BaseAtomizer {
     }
 
     factory<V: Object>(p: Fn<V>, args?: mixed[]): Atom<V> {
-        return this._atomizeProto(
+        return this._plugin.createInstanceAtom(
             fastCall,
             this._protoCache.get(p),
             args ? this.value(args) : new ArgsBaseAtom(),
@@ -120,7 +120,7 @@ export default class BaseAtomizer {
     }
 
     constructComputed<V: Object>(p: Class<V>, args?: BaseAtom<*>[]): Atom<V> {
-        return this._atomizeProto(
+        return this._plugin.createInstanceAtom(
             fastCreateObject,
             this._protoCache.get(p),
             new ArgsBaseAtom(args)
@@ -128,7 +128,7 @@ export default class BaseAtomizer {
     }
 
     factoryComputed<V: Object>(p: Fn<V>, args?: BaseAtom<*>[]): Atom<V> {
-        return this._atomizeProto(
+        return this._plugin.createInstanceAtom(
             fastCall,
             this._protoCache.get(p),
             new ArgsBaseAtom(args)
