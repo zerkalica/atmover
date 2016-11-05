@@ -30,6 +30,13 @@ atomizers.forEach(([name, atomizer]: Rec) => {
             assert(typeof getAtom(val) === 'object')
         })
 
+        it('from value, after set', () => {
+            const a = atomizer.value({a: 1})
+            const atom = getAtom(a.get())
+            a.set({a: 2})
+            assert(getAtom(a.get()) === atom)
+        })
+
         it('from value after update', () => {
             const a = atomizer.value({a: 1})
             a.get()

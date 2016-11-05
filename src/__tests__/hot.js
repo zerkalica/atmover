@@ -16,7 +16,7 @@ atomizers.forEach(([name, atomizer]: Rec) => {
 
             const atom = atomizer.construct(A)
             assert(atom.get() instanceof A)
-            atom.setProto(B)
+            atomizer.replaceProto(A, B)
             assert(atom.get() instanceof B)
         })
 
@@ -32,7 +32,7 @@ atomizers.forEach(([name, atomizer]: Rec) => {
 
             const atom = atomizer.construct(A)
             atom.get()
-            atom.setProto(B)
+            atomizer.replaceProto(A, B)
             atom.get()
             assert(onUpdateHook.calledOnce)
             assert(onUpdateHook.firstCall.calledWith(sinon.match.instanceOf(B)))
@@ -56,9 +56,22 @@ atomizers.forEach(([name, atomizer]: Rec) => {
             const atom = atomizer.construct(A, [1])
             atom.setArgs([2])
             assert(atom.get() instanceof A)
-            atom.setProto(B)
+            atomizer.replaceProto(A, B)
             assert(atom.get() instanceof B)
             assert(atom.get().a === 3)
         })
+    })
+
+    it('replace twice', () => {
+        class A {}
+        class B extends A {}
+        class C extends A {}
+
+
+        const atom = atomizer.construct(A)
+        assert(atom.get() instanceof A)
+        atomizer.replaceProto(A, B)
+        atomizer.replaceProto(B, C)
+        assert(atom.get() instanceof C)
     })
 })

@@ -9,8 +9,9 @@ import type {Rec} from './atomizers'
 
 atomizers.forEach(([name, atomizer]: Rec) => {
     describe(`${name} subscribe`, () => {
-        it('listen after subscribe', () => {
-            const atom = atomizer.value({a: 1})
+        it('value', () => {
+            const v1 = {a: 1}
+            const atom = atomizer.value(v1)
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             const v2 = {a: 2}
@@ -22,7 +23,26 @@ atomizers.forEach(([name, atomizer]: Rec) => {
             ))
         })
 
-        it('not listen after usubscribe', () => {
+        it('instance', () => {
+            class A {
+                v: number
+                constructor(v: number) {
+                    this.v = v
+                }
+            }
+            const atom = atomizer.construct(A, [1])
+            const listener = sinon.spy()
+            const unsubscribe = atom.subscribe(listener)
+            atom.setArgs([2])
+            assert(listener.calledOnce)
+            assert(listener.firstCall.calledWith(
+                sinon.match.instanceOf(A)
+                    .and(sinon.match({v: 2}))
+            ))
+            unsubscribe()
+        })
+
+        it('not listen after unsubscribe', () => {
             const atom = atomizer.value({a: 1})
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
@@ -30,6 +50,29 @@ atomizers.forEach(([name, atomizer]: Rec) => {
             const v2 = {a: 2}
             atom.set(v2)
             assert(listener.notCalled)
+        })
+
+        it('subscribe twice', () => {
+            const v1 = {a: 1}
+            const atom = atomizer.value(v1)
+            const listener1 = sinon.spy()
+            const listener2 = sinon.spy()
+            const unsubscribe1 = atom.subscribe(listener1)
+            const unsubscribe2 = atom.subscribe(listener2)
+            const v2 = {a: 2}
+            atom.set(v2)
+            assert(listener1.calledOnce)
+            assert(listener1.firstCall.calledWith(
+                sinon.match.same(v2)
+            ))
+
+            assert(listener2.calledOnce)
+            assert(listener2.firstCall.calledWith(
+                sinon.match.same(v2)
+            ))
+
+            unsubscribe1()
+            unsubscribe2()
         })
     })
 })
