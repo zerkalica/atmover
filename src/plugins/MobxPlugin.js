@@ -1,6 +1,6 @@
 // @flow
 
-import type {Atom, CreateInstance, BaseGet, BaseAtom, Transact} from '../interfaces'
+import type {Atom, CreateInstance, AtomGetter, Transact} from '../interfaces'
 import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
 
 interface MobxAtom<V> {
@@ -11,7 +11,7 @@ interface MobxAtom<V> {
 
 interface Mobx {
     transaction(fn: () => void): void;
-    computed<V>(fn: () => V): V;
+    computed<V>(fn: () => V): MobxAtom<V>;
     autorun(fn: () => void): () => void;
     observable<V>(v: V): MobxAtom<V>;
 }
@@ -26,19 +26,13 @@ class BoxedValue<V> {
 class MobxValueAtom<V: Object> {
     _value: MobxAtom<BoxedValue<V>>
     _attachMeta: (value: V) => V
-    _autorun: (fn: () => void) => () => void
 
     constructor(
         mobx: Mobx,
         value: V
     ) {
-        this._autorun = mobx.autorun
         this._attachMeta = createAttachMeta(this)
         this._value = mobx.observable(new BoxedValue(this._attachMeta(value)))
-    }
-
-    setArgs(_opts: mixed[]): void {
-        throw new Error('Can\'t set args, use set instead')
     }
 
     set(value: V): void {
@@ -55,34 +49,25 @@ class MobxValueAtom<V: Object> {
     }
 }
 
-class MobxInstanceAtom<V: Object> {
-    _argsAtom: BaseAtom<mixed[]>
-    _value: V
-    _autorun: (fn: () => void) => () => void
+class MobxInstanceAtom<V: Object | Function> {
+    _value: MobxAtom<V>
 
     constructor(
         mobx: Mobx,
         create: CreateInstance<V>,
-        protoAtom: BaseGet<Function>,
-        argsAtom: BaseAtom<mixed[]>
+        proto: AtomGetter<Function>,
+        args?: ?AtomGetter<*>[]
     ) {
-        this._autorun = mobx.autorun
-        this._argsAtom = argsAtom
-        const instanceFactory = createInstanceFactory(
+        this._value = mobx.computed(createInstanceFactory(
             create,
-            this._argsAtom,
-            protoAtom,
-            this
-        )
-        this._value = mobx.computed(instanceFactory)
-    }
-
-    setArgs(opts: mixed[]): void {
-        this._argsAtom.set(opts)
+            args,
+            proto,
+            createAttachMeta(this)
+        ))
     }
 
     set(_opts: V): void {
-        throw new Error('Can\'t set value, use setArgs instead')
+        throw new Error('Can\'t set value on derivable, use source instead')
     }
 
     get(): V {
@@ -103,15 +88,15 @@ export default class MobxPlugin {
         this.transact = mobx.transaction
     }
 
-    createInstanceAtom<V: Object>(
+    createInstanceAtom<V: Object | Function>(
         create: CreateInstance<V>,
-        protoAtom: BaseGet<Function>,
-        argsAtom: BaseAtom<mixed[]>
+        protoAtom: AtomGetter<Function>,
+        argsAtom?: ?AtomGetter<*>[]
     ): Atom<V> {
         return new MobxInstanceAtom(this._mobx, create, protoAtom, argsAtom)
     }
 
-    createValueAtom<V: Object>(value: V): Atom<V> {
+    createValueAtom<V: Object | Function>(value: V): Atom<V> {
         return new MobxValueAtom(this._mobx, value)
     }
 }

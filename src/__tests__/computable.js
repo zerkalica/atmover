@@ -1,16 +1,18 @@
 // @flow
 /* eslint-env mocha */
 
+import sinon from 'sinon'
 import assert from 'power-assert'
-import atomizers from './atomizers'
-import type {Rec} from './atomizers'
+import atomixers from './atomixers'
+import {onUpdate} from '../interfaces'
+import type {Rec} from './atomixers'
 
-atomizers.forEach(([name, atomizer]: Rec) => {
+atomixers.forEach(([name, atomixer]: Rec) => {
     describe(`${name} computable`, () => {
         it('class', () => {
             type BOpts = {a: number}
 
-            const a = atomizer.value(({a: 1}: BOpts))
+            const a = atomixer.value(({a: 1}: BOpts))
 
             class B {
                 _b: number
@@ -19,9 +21,8 @@ atomizers.forEach(([name, atomizer]: Rec) => {
                 }
             }
 
-            const b = atomizer.constructComputed(B, [a])
+            const b = atomixer.construct(B, [a])
             assert(b.get()._b === 1)
-            assert.throws(() => b.setArgs([]))
             a.set({a: 2})
             assert(b.get()._b === 2)
         })
@@ -29,17 +30,40 @@ atomizers.forEach(([name, atomizer]: Rec) => {
         it('factory', () => {
             type BOpts = {a: number}
 
-            const a = atomizer.value(({a: 1}: BOpts))
+            const a = atomixer.value(({a: 1}: BOpts))
 
             function bFactory(opts: BOpts) {
                 return {_b: opts.a}
             }
 
-            const b = atomizer.factoryComputed(bFactory, [a])
+            const b = atomixer.factory(bFactory, [a])
             assert(b.get()._b === 1)
-            assert.throws(() => b.setArgs([]))
             a.set({a: 2})
             assert(b.get()._b === 2)
+        })
+
+        it('class onUpdateHook on changing deps', () => {
+            const onUpdateHook = sinon.spy()
+            const val = atomixer.value({a: 1})
+            class A {
+                a: number
+
+                constructor({a}: {a: number}) {
+                    this.a = a
+                }
+
+                // $FlowFixMe: computed property key not supported, see https://github.com/facebook/flow/issues/2286
+                [onUpdate](next: A) {
+                    onUpdateHook(next)
+                }
+            }
+
+            const atom = atomixer.construct(A, [val])
+            atom.get()
+            val.set({a: 2})
+            atom.get()
+            assert(onUpdateHook.calledOnce)
+            assert(onUpdateHook.firstCall.calledWith(sinon.match.instanceOf(A)))
         })
     })
 })

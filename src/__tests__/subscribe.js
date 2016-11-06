@@ -4,46 +4,61 @@
 import assert from 'power-assert'
 import sinon from 'sinon'
 
-import atomizers from './atomizers'
-import type {Rec} from './atomizers'
+import atomixers from './atomixers'
+import type {Rec} from './atomixers'
 
-atomizers.forEach(([name, atomizer]: Rec) => {
+atomixers.forEach(([name, atomixer]: Rec) => {
     describe(`${name} subscribe`, () => {
         it('value', () => {
             const v1 = {a: 1}
-            const atom = atomizer.value(v1)
+            const atom = atomixer.value(v1)
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             const v2 = {a: 2}
             atom.set(v2)
-            unsubscribe()
-            assert(listener.calledOnce)
-            assert(listener.firstCall.calledWith(
-                sinon.match.same(v2)
-            ))
+
+            return new Promise((resolve: () => void) => {
+                setTimeout(() => {
+                    assert(listener.calledOnce)
+                    assert(listener.firstCall.calledWith(
+                        sinon.match.same(v2)
+                    ))
+                    unsubscribe()
+
+                    resolve()
+                }, 0)
+            })
         })
 
         it('instance', () => {
             class A {
                 v: number
-                constructor(v: number) {
+                constructor({v}: {v: number}) {
                     this.v = v
                 }
             }
-            const atom = atomizer.construct(A, [1])
+            const arg = atomixer.value({v: 1})
+            const atom = atomixer.construct(A, [arg])
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
-            atom.setArgs([2])
-            assert(listener.calledOnce)
-            assert(listener.firstCall.calledWith(
-                sinon.match.instanceOf(A)
-                    .and(sinon.match({v: 2}))
-            ))
-            unsubscribe()
+            arg.set({v: 2})
+
+            return new Promise((resolve: () => void) => {
+                setTimeout(() => {
+                    assert(listener.calledOnce)
+                    assert(listener.firstCall.calledWith(
+                        sinon.match.instanceOf(A)
+                            .and(sinon.match({v: 2}))
+                    ))
+                    unsubscribe()
+
+                    resolve()
+                }, 0)
+            })
         })
 
         it('not listen after unsubscribe', () => {
-            const atom = atomizer.value({a: 1})
+            const atom = atomixer.value({a: 1})
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             unsubscribe()
@@ -54,25 +69,32 @@ atomizers.forEach(([name, atomizer]: Rec) => {
 
         it('subscribe twice', () => {
             const v1 = {a: 1}
-            const atom = atomizer.value(v1)
+            const atom = atomixer.value(v1)
             const listener1 = sinon.spy()
             const listener2 = sinon.spy()
             const unsubscribe1 = atom.subscribe(listener1)
             const unsubscribe2 = atom.subscribe(listener2)
             const v2 = {a: 2}
             atom.set(v2)
-            assert(listener1.calledOnce)
-            assert(listener1.firstCall.calledWith(
-                sinon.match.same(v2)
-            ))
 
-            assert(listener2.calledOnce)
-            assert(listener2.firstCall.calledWith(
-                sinon.match.same(v2)
-            ))
+            return new Promise((resolve: () => void) => {
+                setTimeout(() => {
+                    assert(listener1.calledOnce)
+                    assert(listener1.firstCall.calledWith(
+                        sinon.match.same(v2)
+                    ))
 
-            unsubscribe1()
-            unsubscribe2()
+                    assert(listener2.calledOnce)
+                    assert(listener2.firstCall.calledWith(
+                        sinon.match.same(v2)
+                    ))
+
+                    unsubscribe1()
+                    unsubscribe2()
+
+                    resolve()
+                }, 0)
+            })
         })
     })
 })

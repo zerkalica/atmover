@@ -1,6 +1,6 @@
 // @flow
 
-import type {Atom, Transact, CreateInstance, BaseGet, BaseAtom} from '../interfaces'
+import type {Atom, Transact, CreateInstance, AtomGetter} from '../interfaces'
 import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
 
 interface LifeCycle {
@@ -27,33 +27,27 @@ interface DerivableJS {
 
 type CreateAtom<V> = (value: V) => DerivableAtom<V>
 
-class DerivableInstanceAtom<V: Object> {
+class DerivableInstanceAtom<V: Object | Function> {
     _createAtom: CreateAtom<*>
-    _argsAtom: BaseAtom<mixed[]>
     _value: Derivable<V>
 
     constructor(
         derivable: DerivableJS,
         create: CreateInstance<V>,
-        protoAtom: BaseGet<Function>,
-        argsAtom: BaseAtom<mixed[]>
+        proto: AtomGetter<Function>,
+        args?: ?AtomGetter<*>[]
     ) {
         this._createAtom = derivable.atom
-        this._argsAtom = argsAtom
         this._value = derivable.derivation(createInstanceFactory(
             create,
-            this._argsAtom,
-            protoAtom,
-            this
+            args,
+            proto,
+            createAttachMeta(this)
         ))
     }
 
-    setArgs(opts: mixed[]): void {
-        this._argsAtom.set(opts)
-    }
-
     set(_opts: V): void {
-        throw new Error('Can\'t set value, use setArgs instead')
+        throw new Error('Can\'t set value on derivable, use source instead')
     }
 
     get(): V {
@@ -73,7 +67,7 @@ class DerivableInstanceAtom<V: Object> {
     }
 }
 
-class DerivableValueAtom<V: Object> {
+class DerivableValueAtom<V: Object | Function> {
     _createAtom: CreateAtom<*>
     _value: DerivableAtom<V>
     _attachMeta: (value: V) => V
@@ -87,10 +81,6 @@ class DerivableValueAtom<V: Object> {
         this._value = derivable.atom(this._attachMeta(value))
     }
 
-    setArgs(_opts: mixed[]): void {
-        throw new Error('Can\'t set args, use set instead')
-    }
-
     set(value: V): void {
         this._value.set(this._attachMeta(value))
     }
@@ -98,6 +88,7 @@ class DerivableValueAtom<V: Object> {
     get(): V {
         return this._value.get()
     }
+
     subscribe(fn: (v: V) => void): () => void {
         const until = this._createAtom(false)
         this._value.react(fn, {
@@ -111,7 +102,7 @@ class DerivableValueAtom<V: Object> {
     }
 }
 
-export default class MobxPlugin {
+export default class DerivablePlugin {
     _derivable: DerivableJS
     transact: Transact
 
@@ -120,15 +111,15 @@ export default class MobxPlugin {
         this.transact = derivable.transact
     }
 
-    createInstanceAtom<V: Object>(
+    createInstanceAtom<V: Object | Function>(
         create: CreateInstance<V>,
-        protoAtom: BaseGet<Function>,
-        argsAtom: BaseAtom<mixed[]>
+        protoAtom: AtomGetter<Function>,
+        argsAtom?: ?AtomGetter<*>[]
     ): Atom<V> {
         return new DerivableInstanceAtom(this._derivable, create, protoAtom, argsAtom)
     }
 
-    createValueAtom<V: Object>(value: V): Atom<V> {
+    createValueAtom<V: Object | Function>(value: V): Atom<V> {
         return new DerivableValueAtom(this._derivable, value)
     }
 }

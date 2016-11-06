@@ -5,18 +5,18 @@ import assert from 'power-assert'
 import sinon from 'sinon'
 
 import {onUpdate} from '../interfaces'
-import atomizers from './atomizers'
-import type {Rec} from './atomizers'
+import atomixers from './atomixers'
+import type {Rec} from './atomixers'
 
-atomizers.forEach(([name, atomizer]: Rec) => {
+atomixers.forEach(([name, atomixer]: Rec) => {
     describe(`${name} hot replace`, () => {
         it('class without deps', () => {
             class A {}
             class B extends A {}
 
-            const atom = atomizer.construct(A)
+            const atom = atomixer.construct(A)
             assert(atom.get() instanceof A)
-            atomizer.replaceProto(A, B)
+            atomixer.replaceProto(A, B)
             assert(atom.get() instanceof B)
         })
 
@@ -30,9 +30,9 @@ atomizers.forEach(([name, atomizer]: Rec) => {
             }
             class B extends A {}
 
-            const atom = atomizer.construct(A)
+            const atom = atomixer.construct(A)
             atom.get()
-            atomizer.replaceProto(A, B)
+            atomixer.replaceProto(A, B)
             atom.get()
             assert(onUpdateHook.calledOnce)
             assert(onUpdateHook.firstCall.calledWith(sinon.match.instanceOf(B)))
@@ -48,15 +48,15 @@ atomizers.forEach(([name, atomizer]: Rec) => {
 
             class B extends A {
                 b: number
-                constructor(a: number) {
+                constructor({a}: {a: number}) {
                     super(a + 1)
                 }
             }
-
-            const atom = atomizer.construct(A, [1])
-            atom.setArgs([2])
+            const v = atomixer.value({a: 1})
+            const atom = atomixer.construct(A, [v])
+            v.set({a: 2})
             assert(atom.get() instanceof A)
-            atomizer.replaceProto(A, B)
+            atomixer.replaceProto(A, B)
             assert(atom.get() instanceof B)
             assert(atom.get().a === 3)
         })
@@ -67,11 +67,10 @@ atomizers.forEach(([name, atomizer]: Rec) => {
         class B extends A {}
         class C extends A {}
 
-
-        const atom = atomizer.construct(A)
+        const atom = atomixer.construct(A)
         assert(atom.get() instanceof A)
-        atomizer.replaceProto(A, B)
-        atomizer.replaceProto(B, C)
+        atomixer.replaceProto(A, B)
+        atomixer.replaceProto(B, C)
         assert(atom.get() instanceof C)
     })
 })
