@@ -35,7 +35,7 @@ class DerivableInstanceAtom<V: Object | Function> {
         derivable: DerivableJS,
         create: CreateInstance<V>,
         proto: AtomGetter<Function>,
-        args?: ?AtomGetter<*>[]
+        args: AtomGetter<*>[]
     ) {
         this._createAtom = derivable.atom
         this._value = derivable.derivation(createInstanceFactory(
@@ -114,7 +114,7 @@ export default class DerivablePlugin {
     createInstanceAtom<V: Object | Function>(
         create: CreateInstance<V>,
         protoAtom: AtomGetter<Function>,
-        argsAtom?: ?AtomGetter<*>[]
+        argsAtom: AtomGetter<*>[]
     ): Atom<V> {
         return new DerivableInstanceAtom(this._derivable, create, protoAtom, argsAtom)
     }

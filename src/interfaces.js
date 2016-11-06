@@ -22,7 +22,7 @@ export interface AtomixerPlugin {
     createInstanceAtom<V: Object | Function>(
         create: CreateInstance<V>,
         protoAtom: AtomGetter<Function>,
-        args?: ?AtomGetter<*>[]
+        args: AtomGetter<*>[]
     ): Atom<V>;
     createValueAtom<V: Object | Function>(value: V): Atom<V>;
     transact: Transact;

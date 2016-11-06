@@ -64,7 +64,7 @@ class CellxInstanceAtom<V: Object | Function> {
         cellx: Cellx,
         create: CreateInstance<V>,
         proto: AtomGetter<Function>,
-        args?: ?AtomGetter<*>[]
+        args: AtomGetter<*>[]
     ) {
         this._value = cellx(createInstanceFactory(
             create,
@@ -99,13 +99,13 @@ export default class CellxPlugin {
 
     constructor(cellx: Cellx) {
         this._cellx = cellx
-        this.transact = cellx.transaction
+        this.transact = (f: () => void) => f()
     }
 
     createInstanceAtom<V: Object | Function>(
         create: CreateInstance<V>,
         protoAtom: AtomGetter<Function>,
-        argsAtom?: ?AtomGetter<*>[]
+        argsAtom: AtomGetter<*>[]
     ): Atom<V> {
         return new CellxInstanceAtom(this._cellx, create, protoAtom, argsAtom)
     }

@@ -53,7 +53,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
             const v = atomixer.value({a: 1})
-            const atom = atomixer.construct(A, [v])
+            const atom = atomixer.construct(A, [v.get()])
             v.set({a: 2})
             assert(atom.get() instanceof A)
             atomixer.replaceProto(A, B)

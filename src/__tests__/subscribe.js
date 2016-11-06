@@ -38,7 +38,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
             const arg = atomixer.value({v: 1})
-            const atom = atomixer.construct(A, [arg])
+            const atom = atomixer.construct(A, [arg.get()])
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             arg.set({v: 2})

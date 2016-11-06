@@ -21,7 +21,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
 
-            const b = atomixer.construct(B, [a])
+            const b = atomixer.construct(B, [a.get()])
             assert(b.get()._b === 1)
             a.set({a: 2})
             assert(b.get()._b === 2)
@@ -36,7 +36,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 return {_b: opts.a}
             }
 
-            const b = atomixer.factory(bFactory, [a])
+            const b = atomixer.factory(bFactory, [a.get()])
             assert(b.get()._b === 1)
             a.set({a: 2})
             assert(b.get()._b === 2)
@@ -58,7 +58,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
 
-            const atom = atomixer.construct(A, [val])
+            const atom = atomixer.construct(A, [val.get()])
             atom.get()
             val.set({a: 2})
             atom.get()

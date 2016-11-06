@@ -2,6 +2,7 @@
 
 import type {Transact, Atom, Fn, AtomixerPlugin, ProtoCache, AtomGetter, AtomSetter} from './interfaces'
 import {fastCreateObject, fastCall} from './fastCreate'
+import getAtom from './getAtom'
 
 class FakeAtomSetter<V> {
     _v: V
@@ -78,11 +79,21 @@ export default class AtomSetterixer {
         this._protoCache.set(from, to)
     }
 
+    _getAtom(rawArgs?: (Object | Function)[]): AtomGetter<*>[] {
+        const result: AtomGetter<*>[] = []
+        const args = rawArgs || []
+        for (let i = 0, l = args.length; i < l; i++) {
+            result.push(getAtom(args[i]))
+        }
+
+        return result
+    }
+
     construct<V: Object>(p: Class<V>, args?: AtomGetter<*>[]): Atom<V> {
         return this._plugin.createInstanceAtom(
             fastCreateObject,
             this._protoCache.get(p),
-            args
+            this._getAtom(args)
         )
     }
 
@@ -90,7 +101,7 @@ export default class AtomSetterixer {
         return this._plugin.createInstanceAtom(
             fastCall,
             this._protoCache.get(p),
-            args
+            this._getAtom(args)
         )
     }
 }

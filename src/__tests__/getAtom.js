@@ -11,7 +11,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
         it('from constructed', () => {
             class A {}
             const v = atomixer.value({a: 1})
-            const a = atomixer.construct(A, [v])
+            const a = atomixer.construct(A, [v.get()])
             const val = a.get()
             assert(typeof getAtom(val) === 'object')
         })

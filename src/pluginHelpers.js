@@ -19,11 +19,10 @@ export function createAttachMeta<V: Object>(selfAtom: Atom<V>): AttachMeta<V> {
 
 export function createInstanceFactory<V: Object>(
     create: (proto: Class<V>, deps: mixed[]) => V,
-    rawArgs?: ?AtomGetter<*>[],
+    args: AtomGetter<*>[],
     protoAtom: AtomGetter<Function>,
     attachMeta: AttachMeta<V>
 ): () => V {
-    const args: AtomGetter<*>[] = rawArgs || []
     return function instanceFactory(): V {
         const deps: mixed[] = []
         for (let i = 0, l = args.length; i < l; i++) {

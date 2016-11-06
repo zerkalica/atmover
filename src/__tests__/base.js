@@ -39,7 +39,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
             const arg = atomixer.value({a: 1})
-            const atom = atomixer.construct(A, [arg])
+            const atom = atomixer.construct(A, [arg.get()])
             assert(atom.get() instanceof A)
             assert(atom.get().a === 1)
             arg.set({a: 2})
@@ -51,7 +51,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
             function aFactory({a}: {a: number}): {a: number} {
                 return {a}
             }
-            const atom = atomixer.factory(aFactory, [arg])
+            const atom = atomixer.factory(aFactory, [arg.get()])
             assert(atom.get().a === 1)
             arg.set({a: 2})
             assert(atom.get().a === 2)

@@ -64,6 +64,7 @@
     "babel-preset-stage-0": "^6.16.0",
     "cellx": "^1.6.56",
     "derivable": "^0.12.1",
+    "eslint": "^3.9.1",
     "eslint-config-airplus": "^2.0.7",
     "flow-bin": "^0.34.0",
     "glob": "^7.1.1",
