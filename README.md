@@ -41,6 +41,8 @@ assert(b.v === 1)
 
 const unsubscribe: () => void = b.subscribe((b: B) => {
     console.log('reinit B', b)
+}, (err: Error) => {
+    console.log(err)
 })
 
 atmover.transact(() => {

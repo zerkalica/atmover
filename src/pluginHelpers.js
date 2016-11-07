@@ -32,3 +32,36 @@ export function createInstanceFactory<V: Object>(
         return attachMeta(create(protoAtom.get(), deps), deps)
     }
 }
+
+export class AtomError {
+    error: Error
+
+    constructor(error: Error) {
+        this.error = error
+    }
+}
+
+export function invokeDerivable<V: Object | Function>(fn: () => V): V | AtomError {
+    try {
+        return fn()
+    } catch (error) {
+        /* eslint-disable no-console */
+        console.error(error)
+        return new AtomError(error)
+    }
+}
+
+export function createListener<V>(
+    fn: (v: V) => void,
+    err?: (e: Error) => void
+): (v: V | AtomError) => void {
+    return function listener(v: V | AtomError): void {
+        if (v instanceof AtomError) {
+            if (err) {
+                err(v.error)
+            }
+        } else {
+            fn(v)
+        }
+    }
+}

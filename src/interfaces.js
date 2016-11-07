@@ -9,7 +9,7 @@ export interface AtomSetter<V> extends AtomGetter<V> {
 }
 
 export interface Atom<V> extends AtomSetter<V> {
-    subscribe(fn: (v: V) => void): () => void;
+    subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void;
 }
 
 export type Fn<V: Object | Function> = (...args: any) => V

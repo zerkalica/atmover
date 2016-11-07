@@ -1,7 +1,7 @@
 // @flow
 
 import type {Atom, CreateInstance, AtomGetter, Transact} from '../interfaces'
-import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
+import {createInstanceFactory, createAttachMeta, invokeDerivable, AtomError, createListener} from '../pluginHelpers'
 
 interface MobxAtom<V> {
     get(): V;
@@ -51,6 +51,7 @@ class MobxValueAtom<V: Object> {
 
 class MobxInstanceAtom<V: Object | Function> {
     _value: MobxAtom<V>
+    _isHandleErrors: boolean = false
 
     constructor(
         mobx: Mobx,
@@ -58,12 +59,20 @@ class MobxInstanceAtom<V: Object | Function> {
         proto: AtomGetter<Function>,
         args: AtomGetter<*>[]
     ) {
-        this._value = mobx.computed(createInstanceFactory(
+        const createInstance: () => V = createInstanceFactory(
             create,
             args,
             proto,
             createAttachMeta(this)
-        ))
+        )
+
+        const createHandledInstance: () => V = () => {
+            return this._isHandleErrors
+                ? (invokeDerivable(createInstance): any)
+                : createInstance()
+        }
+
+        this._value = mobx.computed(createHandledInstance)
     }
 
     set(_opts: V): void {
@@ -71,11 +80,16 @@ class MobxInstanceAtom<V: Object | Function> {
     }
 
     get(): V {
-        return this._value.get()
+        const value = this._value.get()
+        if (value instanceof AtomError) {
+            return (undefined: any)
+        }
+        return value
     }
 
-    subscribe(fn: (v: V) => void): () => void {
-        return this._value.observe(fn)
+    subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
+        this._isHandleErrors = true
+        return this._value.observe(createListener(fn, err))
     }
 }
 

@@ -1,7 +1,7 @@
 // @flow
 
 import type {Atom, Transact, CreateInstance, AtomGetter} from '../interfaces'
-import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
+import {createInstanceFactory, createAttachMeta, invokeDerivable, AtomError, createListener} from '../pluginHelpers'
 
 interface LifeCycle {
     until?: Derivable<boolean>;
@@ -26,46 +26,6 @@ interface DerivableJS {
 }
 
 type CreateAtom<V> = (value: V) => DerivableAtom<V>
-
-class DerivableInstanceAtom<V: Object | Function> {
-    _createAtom: CreateAtom<*>
-    _value: Derivable<V>
-
-    constructor(
-        derivable: DerivableJS,
-        create: CreateInstance<V>,
-        proto: AtomGetter<Function>,
-        args: AtomGetter<*>[]
-    ) {
-        this._createAtom = derivable.atom
-        this._value = derivable.derivation(createInstanceFactory(
-            create,
-            args,
-            proto,
-            createAttachMeta(this)
-        ))
-    }
-
-    set(_opts: V): void {
-        throw new Error('Can\'t set value on derivable, use source instead')
-    }
-
-    get(): V {
-        return this._value.get()
-    }
-
-    subscribe(fn: (v: V) => void): () => void {
-        const until = this._createAtom(false)
-        this._value.react(fn, {
-            skipFirst: true,
-            until
-        })
-
-        return function unsubscribe(): void {
-            until.set(true)
-        }
-    }
-}
 
 class DerivableValueAtom<V: Object | Function> {
     _createAtom: CreateAtom<*>
@@ -92,6 +52,61 @@ class DerivableValueAtom<V: Object | Function> {
     subscribe(fn: (v: V) => void): () => void {
         const until = this._createAtom(false)
         this._value.react(fn, {
+            skipFirst: true,
+            until
+        })
+
+        return function unsubscribe(): void {
+            until.set(true)
+        }
+    }
+}
+
+class DerivableInstanceAtom<V: Object | Function> {
+    _createAtom: CreateAtom<*>
+    _value: Derivable<V>
+    _isHandleErrors: boolean = false
+
+    constructor(
+        derivable: DerivableJS,
+        create: CreateInstance<V>,
+        proto: AtomGetter<Function>,
+        args: AtomGetter<*>[]
+    ) {
+        this._createAtom = derivable.atom
+
+        const createInstance: () => V = createInstanceFactory(
+            create,
+            args,
+            proto,
+            createAttachMeta(this)
+        )
+
+        const createHandledInstance: () => V = () => {
+            return this._isHandleErrors
+                ? (invokeDerivable(createInstance): any)
+                : createInstance()
+        }
+
+        this._value = derivable.derivation(createHandledInstance)
+    }
+
+    set(_opts: V): void {
+        throw new Error('Can\'t set value on derivable, use source instead')
+    }
+
+    get(): V {
+        const value = this._value.get()
+        if (value instanceof AtomError) {
+            return (undefined: any)
+        }
+        return value
+    }
+
+    subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
+        const until = this._createAtom(false)
+        this._isHandleErrors = true
+        this._value.react(createListener(fn, err), {
             skipFirst: true,
             until
         })

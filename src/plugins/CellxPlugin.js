@@ -1,6 +1,6 @@
 // @flow
 
-import type {Atom, CreateInstance, AtomGetter, Transact} from '../interfaces'
+import type {Atom, Transact, CreateInstance, AtomGetter} from '../interfaces'
 import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
 
 interface CellxEvent<V> {
@@ -59,6 +59,7 @@ class CellxValueAtom<V: Object | Function> {
 
 class CellxInstanceAtom<V: Object | Function> {
     _value: any // CellxAtom<BoxedValue<V>>
+    _isHandleErrors: boolean = false
 
     constructor(
         cellx: Cellx,
@@ -66,12 +67,14 @@ class CellxInstanceAtom<V: Object | Function> {
         proto: AtomGetter<Function>,
         args: AtomGetter<*>[]
     ) {
-        this._value = cellx(createInstanceFactory(
+        const createInstance: () => V = createInstanceFactory(
             create,
             args,
             proto,
             createAttachMeta(this)
-        ))
+        )
+
+        this._value = cellx(createInstance)
     }
 
     set(_opts: V): void {
@@ -82,13 +85,27 @@ class CellxInstanceAtom<V: Object | Function> {
         return this._value()
     }
 
-    subscribe(fn: (v: V) => void): () => void {
+    subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
         const value = this._value
-        const changeListener = (event: CellxEvent<V>) => fn(event.value)
-        value('addChangeListener', changeListener)
+        this._isHandleErrors = true
+
+        function listener(
+            error: Error,
+            evt: {
+                type: string;
+                value: V
+            }
+        ): void {
+            if (error && err) {
+                err(error)
+            } else {
+                fn(evt.value)
+            }
+        }
+        this._value('subscribe', listener)
 
         return function unsubscribe(): void {
-            value('removeChangeListener', changeListener)
+            value('unsubscribe', listener)
         }
     }
 }
