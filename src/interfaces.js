@@ -18,7 +18,7 @@ export type Transact = (fn: () => void) => void
 
 export type CreateInstance<V> = (proto: Function, args: mixed[]) => V
 
-export interface AtomixerPlugin {
+export interface AtmoverPlugin {
     createInstanceAtom<V: Object | Function>(
         create: CreateInstance<V>,
         protoAtom: AtomGetter<Function>,
@@ -33,5 +33,5 @@ export interface ProtoCache<V> {
     get(key: V): AtomSetter<V>;
 }
 
-export const metaKey = Symbol('amx:atom')
-export const onUpdate = Symbol('amx:onUpdate')
+export const metaKey = Symbol('aovr:atom')
+export const onUpdate = Symbol('aovr:onUpdate')

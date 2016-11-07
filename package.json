@@ -1,5 +1,5 @@
 {
-  "name": "atomixer",
+  "name": "atmover",
   "version": "1.0.0",
   "description": "Abstraction layer on top of mobx, cellx, derivable with hot reload support",
   "publishConfig": {
@@ -26,7 +26,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/zerkalica/atomixer.git"
+    "url": "http://github.com/zerkalica/atmover.git"
   },
   "keywords": [
     "mobx",
@@ -51,10 +51,10 @@
   ],
   "devDependencies": {
     "babel-cli": "^6.18.0",
-    "babel-core": "^6.18.0",
+    "babel-core": "^6.18.2",
     "babel-loader": "^6.2.7",
     "babel-plugin-espower": "^2.3.1",
-    "babel-plugin-module-resolver": "^2.2.0",
+    "babel-plugin-module-resolver": "^2.3.0",
     "babel-plugin-syntax-decorators": "^6.13.0",
     "babel-plugin-syntax-flow": "^6.18.0",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",

@@ -4,14 +4,14 @@
 import assert from 'power-assert'
 import sinon from 'sinon'
 
-import atomixers from './atomixers'
-import type {Rec} from './atomixers'
+import plugins from './plugins'
+import type {Rec} from './plugins'
 
-atomixers.forEach(([name, atomixer]: Rec) => {
+plugins.forEach(([name, atmover]: Rec) => {
     describe(`${name} subscribe`, () => {
         it('value', () => {
             const v1 = {a: 1}
-            const atom = atomixer.value(v1)
+            const atom = atmover.value(v1)
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             const v2 = {a: 2}
@@ -37,8 +37,8 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                     this.v = v
                 }
             }
-            const arg = atomixer.value({v: 1})
-            const atom = atomixer.construct(A, [arg.get()])
+            const arg = atmover.value({v: 1})
+            const atom = atmover.construct(A, [arg])
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             arg.set({v: 2})
@@ -58,7 +58,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
         })
 
         it('not listen after unsubscribe', () => {
-            const atom = atomixer.value({a: 1})
+            const atom = atmover.value({a: 1})
             const listener = sinon.spy()
             const unsubscribe = atom.subscribe(listener)
             unsubscribe()
@@ -69,7 +69,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
 
         it('subscribe twice', () => {
             const v1 = {a: 1}
-            const atom = atomixer.value(v1)
+            const atom = atmover.value(v1)
             const listener1 = sinon.spy()
             const listener2 = sinon.spy()
             const unsubscribe1 = atom.subscribe(listener1)

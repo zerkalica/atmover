@@ -5,18 +5,18 @@ import assert from 'power-assert'
 import sinon from 'sinon'
 
 import {onUpdate} from '../interfaces'
-import atomixers from './atomixers'
-import type {Rec} from './atomixers'
+import plugins from './plugins'
+import type {Rec} from './plugins'
 
-atomixers.forEach(([name, atomixer]: Rec) => {
+plugins.forEach(([name, atmover]: Rec) => {
     describe(`${name} hot replace`, () => {
         it('class without deps', () => {
             class A {}
             class B extends A {}
 
-            const atom = atomixer.construct(A)
+            const atom = atmover.construct(A)
             assert(atom.get() instanceof A)
-            atomixer.replaceProto(A, B)
+            atmover.replaceProto(A, B)
             assert(atom.get() instanceof B)
         })
 
@@ -30,9 +30,9 @@ atomixers.forEach(([name, atomixer]: Rec) => {
             }
             class B extends A {}
 
-            const atom = atomixer.construct(A)
+            const atom = atmover.construct(A)
             atom.get()
-            atomixer.replaceProto(A, B)
+            atmover.replaceProto(A, B)
             atom.get()
             assert(onUpdateHook.calledOnce)
             assert(onUpdateHook.firstCall.calledWith(sinon.match.instanceOf(B)))
@@ -52,11 +52,11 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                     super(a + 1)
                 }
             }
-            const v = atomixer.value({a: 1})
-            const atom = atomixer.construct(A, [v.get()])
+            const v = atmover.value({a: 1})
+            const atom = atmover.construct(A, [v])
             v.set({a: 2})
             assert(atom.get() instanceof A)
-            atomixer.replaceProto(A, B)
+            atmover.replaceProto(A, B)
             assert(atom.get() instanceof B)
             assert(atom.get().a === 3)
         })
@@ -67,10 +67,10 @@ atomixers.forEach(([name, atomixer]: Rec) => {
         class B extends A {}
         class C extends A {}
 
-        const atom = atomixer.construct(A)
+        const atom = atmover.construct(A)
         assert(atom.get() instanceof A)
-        atomixer.replaceProto(A, B)
-        atomixer.replaceProto(B, C)
+        atmover.replaceProto(A, B)
+        atmover.replaceProto(B, C)
         assert(atom.get() instanceof C)
     })
 })

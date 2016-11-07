@@ -2,13 +2,13 @@
 /* eslint-env mocha */
 
 import assert from 'power-assert'
-import atomixers from './atomixers'
-import type {Rec} from './atomixers'
+import plugins from './plugins'
+import type {Rec} from './plugins'
 
-atomixers.forEach(([name, atomixer]: Rec) => {
+plugins.forEach(([name, atmover]: Rec) => {
     describe(`${name} base`, () => {
         it('raw object', () => {
-            const atom = atomixer.value({a: 1})
+            const atom = atmover.value({a: 1})
             assert(atom.get().a === 1)
             atom.set({a: 2})
             assert(atom.get().a === 2)
@@ -21,7 +21,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
             const a1 = new A()
             a1.a = 1
 
-            const atom = atomixer.value(a1)
+            const atom = atmover.value(a1)
             assert(atom.get() instanceof A)
             assert(atom.get().a === 1)
             const a2 = new A()
@@ -38,8 +38,8 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                     this.a = a
                 }
             }
-            const arg = atomixer.value({a: 1})
-            const atom = atomixer.construct(A, [arg.get()])
+            const arg = atmover.value({a: 1})
+            const atom = atmover.construct(A, [arg])
             assert(atom.get() instanceof A)
             assert(atom.get().a === 1)
             arg.set({a: 2})
@@ -47,11 +47,11 @@ atomixers.forEach(([name, atomixer]: Rec) => {
         })
 
         it('function separate options and prototype', () => {
-            const arg = atomixer.value({a: 1})
+            const arg = atmover.value({a: 1})
             function aFactory({a}: {a: number}): {a: number} {
                 return {a}
             }
-            const atom = atomixer.factory(aFactory, [arg.get()])
+            const atom = atmover.factory(aFactory, [arg])
             assert(atom.get().a === 1)
             arg.set({a: 2})
             assert(atom.get().a === 2)

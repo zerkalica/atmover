@@ -1,8 +1,7 @@
 // @flow
 
-import type {Transact, Atom, Fn, AtomixerPlugin, ProtoCache, AtomGetter, AtomSetter} from './interfaces'
+import type {Transact, Atom, Fn, AtmoverPlugin, ProtoCache, AtomGetter, AtomSetter} from './interfaces'
 import {fastCreateObject, fastCall} from './fastCreate'
-import getAtom from './getAtom'
 
 class FakeAtomSetter<V> {
     _v: V
@@ -29,9 +28,9 @@ class FakeProtoCache<V> {
 
 class MappedProtoCache<V: Function> {
     _protos: Map<V, AtomSetter<V>> = new Map()
-    _plugin: AtomixerPlugin
+    _plugin: AtmoverPlugin
 
-    constructor(plugin: AtomixerPlugin) {
+    constructor(plugin: AtmoverPlugin) {
         this._plugin = plugin
     }
 
@@ -54,14 +53,14 @@ class MappedProtoCache<V: Function> {
     }
 }
 
-export default class AtomSetterixer {
-    _plugin: AtomixerPlugin
+export default class Atmover {
+    _plugin: AtmoverPlugin
     _protoCache: ProtoCache<Function>
 
     transact: Transact
 
     constructor(
-        plugin: AtomixerPlugin,
+        plugin: AtmoverPlugin,
         isHotReplace?: boolean
     ) {
         this._plugin = plugin
@@ -75,25 +74,15 @@ export default class AtomSetterixer {
         return this._plugin.createValueAtom(v)
     }
 
-    replaceProto(from: Function, to: Function): void {
+    replaceProto<V: Object | Function>(from: Class<V> | Fn<V>, to: Class<V> | Fn<V>): void {
         this._protoCache.set(from, to)
-    }
-
-    _getAtom(rawArgs?: (Object | Function)[]): AtomGetter<*>[] {
-        const result: AtomGetter<*>[] = []
-        const args = rawArgs || []
-        for (let i = 0, l = args.length; i < l; i++) {
-            result.push(getAtom(args[i]))
-        }
-
-        return result
     }
 
     construct<V: Object>(p: Class<V>, args?: AtomGetter<*>[]): Atom<V> {
         return this._plugin.createInstanceAtom(
             fastCreateObject,
             this._protoCache.get(p),
-            this._getAtom(args)
+            args || []
         )
     }
 
@@ -101,7 +90,7 @@ export default class AtomSetterixer {
         return this._plugin.createInstanceAtom(
             fastCall,
             this._protoCache.get(p),
-            this._getAtom(args)
+            args || []
         )
     }
 }

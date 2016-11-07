@@ -99,7 +99,10 @@ export default class CellxPlugin {
 
     constructor(cellx: Cellx) {
         this._cellx = cellx
-        this.transact = (f: () => void) => f()
+        this.transact = function _transact(f: () => void): void {
+            f()
+            cellx.Cell.forceRelease()
+        }
     }
 
     createInstanceAtom<V: Object | Function>(

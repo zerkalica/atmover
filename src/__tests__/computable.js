@@ -3,16 +3,16 @@
 
 import sinon from 'sinon'
 import assert from 'power-assert'
-import atomixers from './atomixers'
+import plugins from './plugins'
 import {onUpdate} from '../interfaces'
-import type {Rec} from './atomixers'
+import type {Rec} from './plugins'
 
-atomixers.forEach(([name, atomixer]: Rec) => {
+plugins.forEach(([name, atmover]: Rec) => {
     describe(`${name} computable`, () => {
         it('class', () => {
             type BOpts = {a: number}
 
-            const a = atomixer.value(({a: 1}: BOpts))
+            const a = atmover.value(({a: 1}: BOpts))
 
             class B {
                 _b: number
@@ -21,7 +21,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
 
-            const b = atomixer.construct(B, [a.get()])
+            const b = atmover.construct(B, [a])
             assert(b.get()._b === 1)
             a.set({a: 2})
             assert(b.get()._b === 2)
@@ -30,13 +30,13 @@ atomixers.forEach(([name, atomixer]: Rec) => {
         it('factory', () => {
             type BOpts = {a: number}
 
-            const a = atomixer.value(({a: 1}: BOpts))
+            const a = atmover.value(({a: 1}: BOpts))
 
             function bFactory(opts: BOpts) {
                 return {_b: opts.a}
             }
 
-            const b = atomixer.factory(bFactory, [a.get()])
+            const b = atmover.factory(bFactory, [a])
             assert(b.get()._b === 1)
             a.set({a: 2})
             assert(b.get()._b === 2)
@@ -44,7 +44,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
 
         it('class onUpdateHook on changing deps', () => {
             const onUpdateHook = sinon.spy()
-            const val = atomixer.value({a: 1})
+            const val = atmover.value({a: 1})
             class A {
                 a: number
 
@@ -58,7 +58,7 @@ atomixers.forEach(([name, atomixer]: Rec) => {
                 }
             }
 
-            const atom = atomixer.construct(A, [val.get()])
+            const atom = atmover.construct(A, [val])
             atom.get()
             val.set({a: 2})
             atom.get()
