@@ -14,7 +14,7 @@ Some limitations: Only object and functions as atom values: atmover attaches to 
 	- [Setup](#setup)
 		- [mobx](#mobx)
 		- [derivable](#derivable)
-		- [cellx:](#cellx)
+		- [cellx](#cellx)
 	- [Value get/set](#value-getset)
 	- [Get atom from object metadata](#get-atom-from-object-metadata)
 	- [Transactions](#transactions)
@@ -57,7 +57,7 @@ const atmover = new Atmover(new DerivablePlugin(derivable), hotReloadingEnabled)
 /// ...
 ```
 
-### cellx:
+### cellx
 
 ```js
 // @flow
