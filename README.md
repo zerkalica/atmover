@@ -4,7 +4,7 @@ Atom overlay: abstraction layer on top of [mobx][mobx], [cellx][cellx], [derivab
 
 Some limitations: Only object and functions as atom values: atmover attaches to them metadata. No observable collections, maps, etc.
 
-[mobx]: mobxjs.github.io/mobx/
+[mobx]: https://github.com/mobxjs/mobx
 [cellx]: https://github.com/Riim/cellx
 [derivable]: https://github.com/ds300/derivablejs
 
