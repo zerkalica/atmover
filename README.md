@@ -1,7 +1,8 @@
 # atmover
 
-Atom overlay: abstraction layer on top of [mobx][mobx], [cellx][cellx], [derivable][derivable] with hot reload support.
-On current moment supported only objects, get, set, subscribe, transact, replace prototype methods, onUpdate hook, error handing.
+Atom overlay: abstraction layer on top of [mobx][mobx], [cellx][cellx], [derivable][derivable] with hot reload support and error handling.
+
+Some limitations: Only object and functions as atom values: atmover attaches to them metadata. No observable collections, maps, etc.
 
 [mobx]: mobxjs.github.io/mobx/
 [cellx]: https://github.com/Riim/cellx
