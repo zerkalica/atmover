@@ -28,7 +28,7 @@ const atmover = new Atmover(new MobxPlugin(mobx), hotReloadingEnabled)
 ```js
 // @flow
 import {Atmover, getAtom} from 'atmover'
-import DerivablePlugin from 'atmover/DerivablePlugin'
+import CellxPlugin from 'atmover/DerivablePlugin'
 import type {Atom} from 'atmover'
 import derivable from 'derivable'
 
@@ -47,7 +47,7 @@ import type {Atom} from 'atmover'
 import cellx from 'cellx'
 
 const hotReloadingEnabled = true
-const atmover = new Atmover(new DerivablePlugin(cellx), hotReloadingEnabled)
+const atmover = new Atmover(new CellxPlugin(cellx), hotReloadingEnabled)
 /// ...
 ```
 
