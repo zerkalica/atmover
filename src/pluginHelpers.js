@@ -5,16 +5,14 @@ import type {AtomGetter, Computed, AtomArg, NormalizedAtomArg, NormalizedAtomArg
 
 type AttachMeta<V> = (value: V, deps?: ?mixed[]) => V
 
-export function createAttachMeta<V: Object>(selfAtom: AtomGetter<V>): AttachMeta<V> {
-    let oldValue: ?V = null
-    return function attachMeta(value: V): V {
-        value[metaKey] = selfAtom // eslint-disable-line
-        if (oldValue && oldValue[onUpdate]) {
-            oldValue[onUpdate].call(oldValue, value)
-        }
-        oldValue = value
-        return value
+export function attachMeta<V: Object>(value: V): V {
+    value[metaKey] = this // eslint-disable-line
+    const oldValue = this._oldValue
+    if (oldValue && oldValue[onUpdate]) {
+        oldValue[onUpdate].call(oldValue, value)
     }
+    this._oldValue = value
+    return value
 }
 
 function normalizeArgs(args: AtomArg[]): NormalizedAtomArg[] {
@@ -93,6 +91,7 @@ export class InstanceFactory<V: Object> {
 
     _attachMeta: AttachMeta<V>
     _isSafe: boolean = false
+    _atom: Computed<V>
 
     constructor(
         args: ?(AtomArg[] | NormalizedAtomArgs),
@@ -105,7 +104,8 @@ export class InstanceFactory<V: Object> {
     }
 
     setAtom(atom: Computed<V>): InstanceFactory<V> {
-        this._attachMeta = createAttachMeta(atom)
+        (atom: any)._attachMeta = attachMeta // eslint-disable-line
+        this._atom = atom
         return this
     }
 
@@ -120,7 +120,7 @@ export class InstanceFactory<V: Object> {
     }
 
     _get(): V {
-        return this._attachMeta(this._create(this._protoAtom.get(), this._args.get()))
+        return (this._atom: any)._attachMeta(this._create(this._protoAtom.get(), this._args.get()))
     }
 
     _getSafe(): V {

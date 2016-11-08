@@ -1,7 +1,7 @@
 // @flow
 
 import type {Computed, Atom, Transact, IInstanceFactory} from '../interfaces'
-import {createAttachMeta, AtomError} from '../pluginHelpers'
+import {attachMeta, AtomError} from '../pluginHelpers'
 
 interface LifeCycle {
     until?: Derivable<boolean>;
@@ -35,7 +35,7 @@ class DerivableValueAtom<V: Object | Function> {
         derivable: DerivableJS,
         value: V
     ) {
-        this._attachMeta = createAttachMeta(this)
+        this._attachMeta = attachMeta
         this._value = derivable.atom(this._attachMeta(value))
     }
 

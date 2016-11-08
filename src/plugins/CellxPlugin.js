@@ -1,105 +1,113 @@
 // @flow
 
 import type {Computed, Atom, Transact, IInstanceFactory} from '../interfaces'
-import {createAttachMeta} from '../pluginHelpers'
+import {attachMeta} from '../pluginHelpers'
 
-type CellxEvent<V> = {
-    type: 'change';
+interface ICellEvent<V> {
     oldValue: V;
     value: V;
 }
-type ListenerName = 'addChangeListener' | 'removeChangeListener'
-type CellxListener<V> = (eventName: ListenerName, fn: (event: CellxEvent<V>) => void) => void
-type CellxSet<V> = (v: V) => void
-type CellxGet<V> = () => V
 
-type CellxAtom<V> = CellxListener<V> | CellxSet<V> | CellxGet<V>
+type CellListener<V> = (err: Error, evt: ICellEvent<V>) => boolean | void
 
-type Cellx<V> = (v: V) => CellxAtom<any>
-
-class BoxedValue<V> {
-    v: V
-    constructor(v: V) {
-        this.v = v
-    }
+interface Cell<T> {
+    (v: T): Cell<T>;
+    (f: () => T): Cell<T>;
+    subscribe(listener: CellListener<T>): Cell<T>;
+    unsubscribe(listener: CellListener<T>): Cell<T>;
+    get(): T;
+    set(value: T): Cell<T>;
 }
 
-class CellxValueAtom<V: Object | Function> {
-    _value: any // CellxAtom<BoxedValue<V>>
-    _attachMeta: (value: V) => V
-
-    constructor(
-        cellx: Cellx<*>,
-        value: V
-    ) {
-        this._attachMeta = createAttachMeta(this)
-        this._value = cellx(new BoxedValue(this._attachMeta(value)))
-    }
-
-    set(value: V): void {
-        this._value(new BoxedValue(this._attachMeta(value)))
-    }
-
-    get(): V {
-        return this._value().v
-    }
+interface ICellxOpts {
+    asynchronous?: boolean;
 }
 
-class CellxInstanceAtom<V: Object | Function> {
-    _value: any // CellxAtom<BoxedValue<V>>
-    _factory: IInstanceFactory<V>
-
-    constructor(
-        cellx: Cellx<*>,
-        factory: IInstanceFactory<V>
-    ) {
-        factory.setAtom(this)
-        this._factory = factory
-        this._value = cellx(factory.get)
-    }
-
-    get(): V {
-        return this._value()
-    }
-
-    subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
-        const value = this._value
-
-        function listener(error: Error, evt: {
-            type: string;
-            value: V
-        }): void {
-            if (error && err) {
-                err(error)
-            } else {
-                fn(evt.value)
-            }
-        }
-        value('subscribe', listener)
-
-        return function unsubscribe(): void {
-            value('unsubscribe', listener)
-        }
-    }
+interface Cellx {
+    configure(opts: ICellxOpts): void;
+    transact: Transact;
+    Cell: Class<Cell<*>>;
 }
 
 export default class CellxPlugin {
-    _cellx: Cellx<*>
     transact: Transact
+    _CellxValueAtom: Class<Atom<any>>
+    _CellxFunctionAtom: Class<Atom<any>>
+    _CellXInstanceAtom: Class<Computed<any>>
 
-    constructor(cellx: Cellx<*>) {
-        this._cellx = cellx
+    constructor(cellx: Cellx) {
+        const Cell: any = cellx.Cell
         cellx.configure({asynchronous: false})
         this.transact = cellx.transact
+
+        this._CellxValueAtom = class CellxValueAtom<V: Object> extends Cell {
+            _attachMeta: (value: V) => V
+            _oldValue: ?V
+
+            constructor(
+                value: V
+            ) {
+                super(value)
+                this._attachMeta = attachMeta
+                this._attachMeta(value)
+            }
+
+            set(value: V): void {
+                super.set(this._attachMeta(value))
+            }
+        }
+
+        this._CellxFunctionAtom = class CellxFunctionAtom<V: Function> extends Cell {
+            constructor(v: V) {
+                /* eslint-disable */
+                super({v})
+            }
+
+            set(v: V): void {
+                super.set({v})
+            }
+
+            get(): V {
+                return super.get().v
+            }
+        }
+
+        this._CellXInstanceAtom = class CellxInstanceAtom<V: Object | Function> extends Cell {
+            _oldValue: ?V
+
+            constructor(factory: IInstanceFactory<V>) {
+                super(factory.get)
+                factory.setAtom(this)
+            }
+
+            subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
+                function listener(error: Error, evt: ICellEvent<V>): void {
+                    if (error && err) {
+                        err(error)
+                    } else {
+                        fn(evt.value)
+                    }
+                }
+                super.subscribe(listener)
+
+                const unsubscribe = () => {
+                    this.unsubscribe(listener)
+                }
+
+                return unsubscribe
+            }
+        }
     }
 
     createInstanceAtom<V: Object | Function>(
         factory: IInstanceFactory<V>
     ): Computed<V> {
-        return new CellxInstanceAtom(this._cellx, factory)
+        return new this._CellXInstanceAtom(factory)
     }
 
     createValueAtom<V: Object | Function>(value: V): Atom<V> {
-        return new CellxValueAtom(this._cellx, value)
+        return typeof value === 'function'
+            ? new this._CellxFunctionAtom(value)
+            : new this._CellxValueAtom(value)
     }
 }

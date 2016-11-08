@@ -1,7 +1,7 @@
 // @flow
 
 import type {Computed, Atom, Transact, IInstanceFactory} from '../interfaces'
-import {createAttachMeta, AtomError} from '../pluginHelpers'
+import {attachMeta, AtomError} from '../pluginHelpers'
 
 interface MobxAtom<V> {
     get(): V;
@@ -31,7 +31,7 @@ class MobxValueAtom<V: Object> {
         mobx: Mobx,
         value: V
     ) {
-        this._attachMeta = createAttachMeta(this)
+        this._attachMeta = attachMeta
         this._value = mobx.observable(new BoxedValue(this._attachMeta(value)))
     }
 
