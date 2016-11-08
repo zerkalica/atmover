@@ -1,13 +1,15 @@
 # atmover
 
 Atom overlay: abstraction layer on top of [mobx][mobx], [cellx][cellx], [derivable][derivable] with hot reload support.
-On current moment supported only objects, get, set, subscribre, transact, replace prototype methods and onUpdate hook.
+On current moment supported only objects, get, set, subscribe, transact, replace prototype methods, onUpdate hook, error handing.
 
 [mobx]: mobxjs.github.io/mobx/
 [cellx]: https://github.com/Riim/cellx
 [derivable]: https://github.com/ds300/derivablejs
 
-## Example for mobx:
+## Setup
+
+### mobx
 
 ```js
 // @flow
@@ -18,67 +20,9 @@ import * as mobx from 'mobx'
 
 const hotReloadingEnabled = true
 const atmover = new Atmover(new MobxPlugin(mobx), hotReloadingEnabled)
-
-interface BOpts {
-    a: number
-}
-
-const aAtom: Atom<BOpts> = atmover.value(({a: 1}: BOpts))
-const bAtom: Atom<BOpts> = atmover.value(({a: 20}: BOpts))
-
-class B {
-    v: number
-    v2: number
-    constructor(opts1: BOpts, opts2: BOpts) {
-        this.v = opts1.a
-        this.v2 = opts2.a
-    }
-}
-
-const bAtom: Atom<B> = atmover.construct(B, [aAtom, bAtom])
-const b: B = bAtom.get()
-assert(b.v === 1)
-
-const unsubscribe: () => void = b.subscribe((b: B) => {
-    console.log('reinit B', b)
-}, (err: Error) => {
-    console.log(err)
-})
-
-atmover.transact(() => {
-    aAtom.set({a: 2}) // reinit B
-    bAtom.set({a: 20})
-})
-
-// Get atom from object metadata:
-assert(getAtom(b).get().v === 2)
-
-class C extends B {
-    v1: number
-    constructor(opts: BOpts) {
-        super(opts)
-        this.v1 = opts.a + 1
-    }
-
-    // $FlowFixMe: computed property key not supported, see https://github.com/facebook/flow/issues/2286
-    [onUpdate](next: C) {
-        console.log('Before update hook')
-    }
-}
-
-// Hot reloading:
-atmover.replaceProto(B, C)
-// console: Before update hook
-// console: reinit B
-
-assert(getAtom(b).get() instanceof C)
-assert(getAtom(b).get().v1 === 3)
-
-unsubscribe()
-// ...
 ```
 
-## Example for derivable:
+### derivable
 
 ```js
 // @flow
@@ -92,7 +36,7 @@ const atmover = new Atmover(new DerivablePlugin(derivable), hotReloadingEnabled)
 /// ...
 ```
 
-## Example for cellx:
+### cellx:
 
 ```js
 // @flow
@@ -104,4 +48,194 @@ import cellx from 'cellx'
 const hotReloadingEnabled = true
 const atmover = new Atmover(new DerivablePlugin(cellx), hotReloadingEnabled)
 /// ...
+```
+
+## Value get/set
+
+```js
+// @flow
+
+interface BOpts {
+    a: number
+}
+
+const aAtom: Atom<BOpts> = atmover.value(({a: 1}: BOpts))
+aAtom.get() // {a: 1}
+aAtom.set({a: 2})
+```
+
+## Get atom from object metadata
+
+```js
+// @flow
+
+const a = aAtom.get()
+a.a === 1
+const atom: Atom<BOpts> = getAtom(a)
+```
+
+## Transactions
+
+```js
+// @flow
+
+const bAtom: Atom<BOpts> = atmover.value(({a: 10}: BOpts))
+
+atmover.transact(() => {
+    aAtom.set({a: 3})
+    bAtom.set({a: 11})
+})
+```
+
+## Computable class
+
+```js
+// @flow
+
+class C {
+    v: number
+
+    constructor(opts1: BOpts, opts2: BOpts) {
+        this.v = opts1.a + opts2.a
+    }
+}
+
+const cAtom: Atom<C> = atmover.construct(C, [aAtom, bAtom])
+const c: C = cAtom.get()
+assert(c.v === 14)
+```
+
+## Computable function
+
+```js
+// @flow
+
+interface CResult {
+    v: number;
+}
+
+function factoryC(opts: BOpts): CResult {
+    return {
+        v: opts.a
+    }
+}
+
+const fAtom: Atom<CResult> = atmover.factory(factoryC, [aAtom])
+const f: CResult = fAtom.get()
+assert(f.v === 3)
+```
+
+## Listen changes
+
+```js
+// @flow
+
+const unsubscribe: () => void = cAtom.subscribe((c: C) => {
+    console.log('c.v = ' + c.v)
+})
+
+aAtom.set({a: 4}) // console: c.v = 15
+
+unsubscribe()
+```
+
+## Error handling in computable
+
+```js
+// @flow
+
+class D {
+    v: number
+
+    constructor(opts1: BOpts, opts2: BOpts) {
+        this.v = opts1.a + opts2.a
+        if (this.v === 0) {
+            throw new Error('Example error')
+        }
+    }
+}
+
+const dAtom: Atom<D> = atmover.construct(C, [aAtom, bAtom])
+
+const unsubscribe: () => void = dAtom.subscribe((c: C) => {
+    console.log('d.v = ' + d.v)
+}, (err: Error) => {
+    console.error(err)
+})
+
+atmover.transact(() => {
+    aAtom.set({a: 0})
+    bAtom.set({a: 0})
+})
+// console: Error: Example error
+
+dAtom.get() === undefined
+
+unsubscribe()
+```
+
+## onUpdate hook
+
+```js
+// @flow
+
+class E {
+    v: number
+    some: number
+
+    constructor(opts1: BOpts) {
+        this.v = opts1.a
+    }
+
+    setSome(some: number): void {
+        this.some = some
+    }
+
+    // $FlowFixMe: computed property key not supported, see https://github.com/facebook/flow/issues/2286
+    [onUpdate](next: E) {
+        next.setSome(this.some)
+    }
+}
+
+const eAtom: Atom<E> = atmover.construct(E, [aAtom])
+
+const oldValue: E = eAtom.get()
+
+oldValue.setSome(33)
+
+aAtom.set({a: 10})
+
+const newValue: E = eAtom.get()
+
+assert(oldValue !== newValue)
+assert(newValue.some === 33)
+```
+
+## Replacing prototype
+
+```js
+// @flow
+class B1 {
+    v: number
+
+    constructor(opts: BOpts) {
+        this.v = opts.a
+    }
+}
+
+class B2 extends B1 {
+    v: number
+
+    constructor(opts: BOpts) {
+        super(opts)
+        this.v = this.v * 2
+    }
+}
+const b1Atom: Atom<B1> = atmover.construct(B1, [aAtom])
+b1Atom.get().v === 10
+
+// Hot reloading:
+atmover.replaceProto(B1, B2)
+
+b1Atom.get().v === 20
 ```
