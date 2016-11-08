@@ -8,23 +8,22 @@ Some limitations: Only object and functions as atom values: atmover attaches to 
 [cellx]: https://github.com/Riim/cellx
 [derivable]: https://github.com/ds300/derivablejs
 
-<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+<!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-- [atmover](#atmover)
-	- [Setup](#setup)
-		- [mobx](#mobx)
-		- [derivable](#derivable)
-		- [cellx](#cellx)
-	- [Value get/set](#value-getset)
-	- [Get atom from object metadata](#get-atom-from-object-metadata)
-	- [Transactions](#transactions)
-	- [Computable class](#computable-class)
-	- [Objects in constructor arguments](#objects-in-constructor-arguments)
-	- [Computable function](#computable-function)
-	- [Listen changes](#listen-changes)
-	- [Error handling in computable](#error-handling-in-computable)
-	- [onUpdate hook](#onupdate-hook)
-	- [Replacing prototype](#replacing-prototype)
+- [Setup](#setup)
+	- [mobx](#mobx)
+	- [derivable](#derivable)
+	- [cellx](#cellx)
+- [Value get/set](#value-getset)
+- [Get atom from object metadata](#get-atom-from-object-metadata)
+- [Transactions](#transactions)
+- [Computable class](#computable-class)
+- [Objects in constructor arguments](#objects-in-constructor-arguments)
+- [Computable function](#computable-function)
+- [Listen changes](#listen-changes)
+- [Error handling in computable](#error-handling-in-computable)
+- [onUpdate hook](#onupdate-hook)
+- [Replacing prototype](#replacing-prototype)
 
 <!-- /TOC -->
 
