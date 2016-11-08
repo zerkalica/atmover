@@ -1,6 +1,6 @@
 {
   "name": "atmover",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Abstraction layer on top of mobx, cellx, derivable with hot reload support",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
