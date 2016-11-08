@@ -1,7 +1,7 @@
 // @flow
 
-import type {Atom, Transact, CreateInstance, AtomGetter} from '../interfaces'
-import {createInstanceFactory, createAttachMeta} from '../pluginHelpers'
+import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
+import {createAttachMeta} from '../pluginHelpers'
 
 interface CellxEvent<V> {
     oldValue: V;
@@ -43,38 +43,19 @@ class CellxValueAtom<V: Object | Function> {
     get(): V {
         return this._value().v
     }
-
-    subscribe(fn: (v: V) => void): () => void {
-        function changeListener(event: CellxEvent<BoxedValue<V>>): void {
-            return fn(event.value.v)
-        }
-
-        this._value('addChangeListener', changeListener)
-        const unsubscribe = () => {
-            this._value('removeChangeListener', changeListener)
-        }
-        return unsubscribe
-    }
 }
 
 class CellxInstanceAtom<V: Object | Function> {
     _value: any // CellxAtom<BoxedValue<V>>
-    _isHandleErrors: boolean = false
+    _factory: IInstanceFactory<V>
 
     constructor(
         cellx: Cellx,
-        create: CreateInstance<V>,
-        proto: AtomGetter<Function>,
-        args: AtomGetter<*>[]
+        factory: IInstanceFactory<V>
     ) {
-        const createInstance: () => V = createInstanceFactory(
-            create,
-            args,
-            proto,
-            createAttachMeta(this)
-        )
-
-        this._value = cellx(createInstance)
+        factory.setAtom(this)
+        this._factory = factory
+        this._value = cellx(factory.get)
     }
 
     set(_opts: V): void {
@@ -87,22 +68,18 @@ class CellxInstanceAtom<V: Object | Function> {
 
     subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
         const value = this._value
-        this._isHandleErrors = true
 
-        function listener(
-            error: Error,
-            evt: {
-                type: string;
-                value: V
-            }
-        ): void {
+        function listener(error: Error, evt: {
+            type: string;
+            value: V
+        }): void {
             if (error && err) {
                 err(error)
             } else {
                 fn(evt.value)
             }
         }
-        this._value('subscribe', listener)
+        value('subscribe', listener)
 
         return function unsubscribe(): void {
             value('unsubscribe', listener)
@@ -116,21 +93,17 @@ export default class CellxPlugin {
 
     constructor(cellx: Cellx) {
         this._cellx = cellx
-        this.transact = function _transact(f: () => void): void {
-            f()
-            cellx.Cell.forceRelease()
-        }
+        cellx.configure({asynchronous: false})
+        this.transact = cellx.transact
     }
 
     createInstanceAtom<V: Object | Function>(
-        create: CreateInstance<V>,
-        protoAtom: AtomGetter<Function>,
-        argsAtom: AtomGetter<*>[]
+        factory: IInstanceFactory<V>
     ): Atom<V> {
-        return new CellxInstanceAtom(this._cellx, create, protoAtom, argsAtom)
+        return new CellxInstanceAtom(this._cellx, factory)
     }
 
-    createValueAtom<V: Object | Function>(value: V): Atom<V> {
+    createValueAtom<V: Object | Function>(value: V): AtomSetter<V> {
         return new CellxValueAtom(this._cellx, value)
     }
 }

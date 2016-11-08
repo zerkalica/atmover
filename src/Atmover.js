@@ -1,7 +1,8 @@
 // @flow
 
-import type {Transact, Atom, Fn, AtmoverPlugin, ProtoCache, AtomGetter, AtomSetter} from './interfaces'
+import type {Transact, Atom, Fn, AtmoverPlugin, ProtoCache, AtomSetter, AtomArg, NormalizedAtomArgs} from './interfaces'
 import {fastCreateObject, fastCall} from './fastCreate'
+import {InstanceFactory} from './pluginHelpers'
 
 class FakeAtomSetter<V> {
     _v: V
@@ -70,7 +71,7 @@ export default class Atmover {
             : new FakeProtoCache()
     }
 
-    value<V: Object>(v: V): Atom<V> {
+    value<V: Object>(v: V): AtomSetter<V> {
         return this._plugin.createValueAtom(v)
     }
 
@@ -78,19 +79,15 @@ export default class Atmover {
         this._protoCache.set(from, to)
     }
 
-    construct<V: Object>(p: Class<V>, args?: AtomGetter<*>[]): Atom<V> {
+    construct<V: Object>(p: Class<V>, args?: (AtomArg[] | NormalizedAtomArgs)): Atom<V> {
         return this._plugin.createInstanceAtom(
-            fastCreateObject,
-            this._protoCache.get(p),
-            args || []
+            new InstanceFactory(args, this._protoCache.get(p), fastCreateObject)
         )
     }
 
-    factory<V: Object>(p: Fn<V>, args?: AtomGetter<*>[]): Atom<V> {
+    factory<V: Object>(p: Fn<V>, args?: (AtomArg[] | NormalizedAtomArgs)): Atom<V> {
         return this._plugin.createInstanceAtom(
-            fastCall,
-            this._protoCache.get(p),
-            args || []
+            new InstanceFactory(args, this._protoCache.get(p), fastCall)
         )
     }
 }

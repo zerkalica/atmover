@@ -8,28 +8,9 @@ import plugins from './plugins'
 import type {Rec} from './plugins'
 
 plugins.forEach(([name, atmover]: Rec) => {
+    const pass = (v: any) => v
+
     describe(`${name} subscribe`, () => {
-        it('value', () => {
-            const v1 = {a: 1}
-            const atom = atmover.value(v1)
-            const listener = sinon.spy()
-            const unsubscribe = atom.subscribe(listener)
-            const v2 = {a: 2}
-            atom.set(v2)
-
-            return new Promise((resolve: () => void) => {
-                setTimeout(() => {
-                    assert(listener.calledOnce)
-                    assert(listener.firstCall.calledWith(
-                        sinon.match.same(v2)
-                    ))
-                    unsubscribe()
-
-                    resolve()
-                }, 0)
-            })
-        })
-
         it('instance', () => {
             class A {
                 v: number
@@ -43,24 +24,19 @@ plugins.forEach(([name, atmover]: Rec) => {
             const unsubscribe = atom.subscribe(listener)
             arg.set({v: 2})
 
-            return new Promise((resolve: () => void) => {
-                setTimeout(() => {
-                    assert(listener.calledOnce)
-                    assert(listener.firstCall.calledWith(
-                        sinon.match.instanceOf(A)
-                            .and(sinon.match({v: 2}))
-                    ))
-                    unsubscribe()
-
-                    resolve()
-                }, 0)
-            })
+            assert(listener.calledOnce)
+            assert(listener.firstCall.calledWith(
+                sinon.match.instanceOf(A)
+                    .and(sinon.match({v: 2}))
+            ))
+            unsubscribe()
         })
 
         it('not listen after unsubscribe', () => {
             const atom = atmover.value({a: 1})
             const listener = sinon.spy()
-            const unsubscribe = atom.subscribe(listener)
+            const computable = atmover.factory(pass, [atom])
+            const unsubscribe = computable.subscribe(listener)
             unsubscribe()
             const v2 = {a: 2}
             atom.set(v2)
@@ -72,29 +48,26 @@ plugins.forEach(([name, atmover]: Rec) => {
             const atom = atmover.value(v1)
             const listener1 = sinon.spy()
             const listener2 = sinon.spy()
-            const unsubscribe1 = atom.subscribe(listener1)
-            const unsubscribe2 = atom.subscribe(listener2)
+
+            const computable = atmover.factory(pass, [atom])
+            const unsubscribe1 = computable.subscribe(listener1)
+            const unsubscribe2 = computable.subscribe(listener2)
+
             const v2 = {a: 2}
             atom.set(v2)
 
-            return new Promise((resolve: () => void) => {
-                setTimeout(() => {
-                    assert(listener1.calledOnce)
-                    assert(listener1.firstCall.calledWith(
-                        sinon.match.same(v2)
-                    ))
+            assert(listener1.calledOnce)
+            assert(listener1.firstCall.calledWith(
+                sinon.match.same(v2)
+            ))
 
-                    assert(listener2.calledOnce)
-                    assert(listener2.firstCall.calledWith(
-                        sinon.match.same(v2)
-                    ))
+            assert(listener2.calledOnce)
+            assert(listener2.firstCall.calledWith(
+                sinon.match.same(v2)
+            ))
 
-                    unsubscribe1()
-                    unsubscribe2()
-
-                    resolve()
-                }, 0)
-            })
+            unsubscribe1()
+            unsubscribe2()
         })
     })
 })

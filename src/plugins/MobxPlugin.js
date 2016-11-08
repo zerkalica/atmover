@@ -1,7 +1,7 @@
 // @flow
 
-import type {Atom, CreateInstance, AtomGetter, Transact} from '../interfaces'
-import {createInstanceFactory, createAttachMeta, invokeDerivable, AtomError, createListener} from '../pluginHelpers'
+import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
+import {createAttachMeta, AtomError} from '../pluginHelpers'
 
 interface MobxAtom<V> {
     get(): V;
@@ -42,37 +42,19 @@ class MobxValueAtom<V: Object> {
     get(): V {
         return this._value.get().v
     }
-
-    subscribe(fn: (v: V) => void): () => void {
-        const unboxValue = (v: BoxedValue<V>) => fn(v.v)
-        return this._value.observe(unboxValue)
-    }
 }
 
 class MobxInstanceAtom<V: Object | Function> {
     _value: MobxAtom<V>
-    _isHandleErrors: boolean = false
+    _factory: IInstanceFactory<V>
 
     constructor(
         mobx: Mobx,
-        create: CreateInstance<V>,
-        proto: AtomGetter<Function>,
-        args: AtomGetter<*>[]
+        factory: IInstanceFactory<V>
     ) {
-        const createInstance: () => V = createInstanceFactory(
-            create,
-            args,
-            proto,
-            createAttachMeta(this)
-        )
-
-        const createHandledInstance: () => V = () => {
-            return this._isHandleErrors
-                ? (invokeDerivable(createInstance): any)
-                : createInstance()
-        }
-
-        this._value = mobx.computed(createHandledInstance)
+        this._factory = factory
+        factory.setAtom(this)
+        this._value = mobx.computed(factory.get)
     }
 
     set(_opts: V): void {
@@ -88,8 +70,7 @@ class MobxInstanceAtom<V: Object | Function> {
     }
 
     subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
-        this._isHandleErrors = true
-        return this._value.observe(createListener(fn, err))
+        return this._value.observe(this._factory.setSafeMode(true).createListener(fn, err))
     }
 }
 
@@ -103,14 +84,12 @@ export default class MobxPlugin {
     }
 
     createInstanceAtom<V: Object | Function>(
-        create: CreateInstance<V>,
-        protoAtom: AtomGetter<Function>,
-        argsAtom: AtomGetter<*>[]
+        factory: IInstanceFactory<V>
     ): Atom<V> {
-        return new MobxInstanceAtom(this._mobx, create, protoAtom, argsAtom)
+        return new MobxInstanceAtom(this._mobx, factory)
     }
 
-    createValueAtom<V: Object | Function>(value: V): Atom<V> {
+    createValueAtom<V: Object | Function>(value: V): AtomSetter<V> {
         return new MobxValueAtom(this._mobx, value)
     }
 }

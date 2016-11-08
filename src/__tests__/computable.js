@@ -27,6 +27,25 @@ plugins.forEach(([name, atmover]: Rec) => {
             assert(b.get()._b === 2)
         })
 
+        it('object as arg', () => {
+            type BOpts = {a: number}
+
+            const a = atmover.value(({a: 1}: BOpts))
+            const b = atmover.value(({a: 2}: BOpts))
+
+            class C {
+                _b: number
+                _b2: number
+                constructor(opts: BOpts, rec: {b: BOpts}) {
+                    this._b = opts.a
+                    this._b2 = rec.b.a
+                }
+            }
+
+            const c = atmover.construct(C, [a, {b}])
+            assert(c.get()._b2 === 2)
+        })
+
         it('factory', () => {
             type BOpts = {a: number}
 

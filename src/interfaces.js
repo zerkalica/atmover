@@ -8,7 +8,7 @@ export interface AtomSetter<V> extends AtomGetter<V> {
     set(val: V): void;
 }
 
-export interface Atom<V> extends AtomSetter<V> {
+export interface Atom<V> extends AtomGetter<V> {
     subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void;
 }
 
@@ -18,13 +18,24 @@ export type Transact = (fn: () => void) => void
 
 export type CreateInstance<V> = (proto: Function, args: mixed[]) => V
 
+export interface IAtomError {
+    error: Error;
+}
+
+export interface IInstanceFactory<V> extends AtomGetter<V> {
+    setAtom(atom: Atom<V>): IInstanceFactory<V>;
+    setSafeMode(isSafe: boolean): IInstanceFactory<V>;
+    createListener(
+        fn: (v: V) => void,
+        err?: (e: Error) => void
+    ): (v: V) => void;
+}
+
 export interface AtmoverPlugin {
     createInstanceAtom<V: Object | Function>(
-        create: CreateInstance<V>,
-        protoAtom: AtomGetter<Function>,
-        args: AtomGetter<*>[]
+        instanceFactory: IInstanceFactory<V>
     ): Atom<V>;
-    createValueAtom<V: Object | Function>(value: V): Atom<V>;
+    createValueAtom<V: Object | Function>(value: V): AtomSetter<V>;
     transact: Transact;
 }
 
@@ -33,5 +44,22 @@ export interface ProtoCache<V> {
     get(key: V): AtomSetter<V>;
 }
 
-export const metaKey = Symbol('aovr:atom')
-export const onUpdate = Symbol('aovr:onUpdate')
+type ValuesRec = {key: string, value: AtomGetter<*>}
+
+export type NormalizedAtomArg = {
+    id: 1;
+    value: AtomGetter<*>;
+} | {
+    id: 2;
+    values: ValuesRec[]
+}
+
+export type NormalizedAtomArgs = {
+    id: 3;
+    args: NormalizedAtomArg[];
+}
+
+export type AtomArg = AtomGetter<*> | {[id: string]: AtomGetter<*>}
+
+export const metaKey = Symbol('ao:atom')
+export const onUpdate = Symbol('ao:upd')

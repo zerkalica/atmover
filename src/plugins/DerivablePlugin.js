@@ -1,7 +1,7 @@
 // @flow
 
-import type {Atom, Transact, CreateInstance, AtomGetter} from '../interfaces'
-import {createInstanceFactory, createAttachMeta, invokeDerivable, AtomError, createListener} from '../pluginHelpers'
+import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
+import {createAttachMeta, AtomError} from '../pluginHelpers'
 
 interface LifeCycle {
     until?: Derivable<boolean>;
@@ -28,7 +28,6 @@ interface DerivableJS {
 type CreateAtom<V> = (value: V) => DerivableAtom<V>
 
 class DerivableValueAtom<V: Object | Function> {
-    _createAtom: CreateAtom<*>
     _value: DerivableAtom<V>
     _attachMeta: (value: V) => V
 
@@ -36,7 +35,6 @@ class DerivableValueAtom<V: Object | Function> {
         derivable: DerivableJS,
         value: V
     ) {
-        this._createAtom = derivable.atom
         this._attachMeta = createAttachMeta(this)
         this._value = derivable.atom(this._attachMeta(value))
     }
@@ -48,47 +46,22 @@ class DerivableValueAtom<V: Object | Function> {
     get(): V {
         return this._value.get()
     }
-
-    subscribe(fn: (v: V) => void): () => void {
-        const until = this._createAtom(false)
-        this._value.react(fn, {
-            skipFirst: true,
-            until
-        })
-
-        return function unsubscribe(): void {
-            until.set(true)
-        }
-    }
 }
 
 class DerivableInstanceAtom<V: Object | Function> {
     _createAtom: CreateAtom<*>
     _value: Derivable<V>
-    _isHandleErrors: boolean = false
+    _factory: IInstanceFactory<V>
 
     constructor(
         derivable: DerivableJS,
-        create: CreateInstance<V>,
-        proto: AtomGetter<Function>,
-        args: AtomGetter<*>[]
+        factory: IInstanceFactory<V>
     ) {
         this._createAtom = derivable.atom
+        factory.setAtom(this)
 
-        const createInstance: () => V = createInstanceFactory(
-            create,
-            args,
-            proto,
-            createAttachMeta(this)
-        )
-
-        const createHandledInstance: () => V = () => {
-            return this._isHandleErrors
-                ? (invokeDerivable(createInstance): any)
-                : createInstance()
-        }
-
-        this._value = derivable.derivation(createHandledInstance)
+        this._value = derivable.derivation(factory.get)
+        this._factory = factory
     }
 
     set(_opts: V): void {
@@ -105,8 +78,9 @@ class DerivableInstanceAtom<V: Object | Function> {
 
     subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void {
         const until = this._createAtom(false)
-        this._isHandleErrors = true
-        this._value.react(createListener(fn, err), {
+        const f = this._factory
+        f.setSafeMode(true)
+        this._value.react(f.createListener(fn, err), {
             skipFirst: true,
             until
         })
@@ -127,14 +101,12 @@ export default class DerivablePlugin {
     }
 
     createInstanceAtom<V: Object | Function>(
-        create: CreateInstance<V>,
-        protoAtom: AtomGetter<Function>,
-        argsAtom: AtomGetter<*>[]
+        factory: IInstanceFactory<V>
     ): Atom<V> {
-        return new DerivableInstanceAtom(this._derivable, create, protoAtom, argsAtom)
+        return new DerivableInstanceAtom(this._derivable, factory)
     }
 
-    createValueAtom<V: Object | Function>(value: V): Atom<V> {
+    createValueAtom<V: Object | Function>(value: V): AtomSetter<V> {
         return new DerivableValueAtom(this._derivable, value)
     }
 }

@@ -106,6 +106,24 @@ const c: C = cAtom.get()
 assert(c.v === 14)
 ```
 
+## Objects in constructor arguments
+
+```js
+// @flow
+
+class C {
+    v: number
+
+    constructor(opts1: BOpts, opts2: {b: BOpts}) {
+        this.v = opts1.a + opts2.b.a
+    }
+}
+
+const cAtom: Atom<C> = atmover.construct(C, [aAtom, {b: bAtom}])
+const c: C = cAtom.get()
+assert(c.v === 14)
+```
+
 ## Computable function
 
 ```js
