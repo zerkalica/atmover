@@ -4,11 +4,11 @@ export interface AtomGetter<V> {
     get(): V;
 }
 
-export interface AtomSetter<V> extends AtomGetter<V> {
+export interface Atom<V> extends AtomGetter<V> {
     set(val: V): void;
 }
 
-export interface Atom<V> extends AtomGetter<V> {
+export interface Computed<V> extends AtomGetter<V> {
     subscribe(fn: (v: V) => void, err?: (e: Error) => void): () => void;
 }
 
@@ -23,7 +23,7 @@ export interface IAtomError {
 }
 
 export interface IInstanceFactory<V> extends AtomGetter<V> {
-    setAtom(atom: Atom<V>): IInstanceFactory<V>;
+    setAtom(atom: Computed<V>): IInstanceFactory<V>;
     setSafeMode(isSafe: boolean): IInstanceFactory<V>;
     createListener(
         fn: (v: V) => void,
@@ -34,14 +34,14 @@ export interface IInstanceFactory<V> extends AtomGetter<V> {
 export interface AtmoverPlugin {
     createInstanceAtom<V: Object | Function>(
         instanceFactory: IInstanceFactory<V>
-    ): Atom<V>;
-    createValueAtom<V: Object | Function>(value: V): AtomSetter<V>;
+    ): Computed<V>;
+    createValueAtom<V: Object | Function>(value: V): Atom<V>;
     transact: Transact;
 }
 
 export interface ProtoCache<V> {
     set(key: V, value: V): void;
-    get(key: V): AtomSetter<V>;
+    get(key: V): Atom<V>;
 }
 
 type ValuesRec = {key: string, value: AtomGetter<*>}

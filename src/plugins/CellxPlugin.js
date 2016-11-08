@@ -1,6 +1,6 @@
 // @flow
 
-import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
+import type {Computed, Atom, Transact, IInstanceFactory} from '../interfaces'
 import {createAttachMeta} from '../pluginHelpers'
 
 type CellxEvent<V> = {
@@ -95,11 +95,11 @@ export default class CellxPlugin {
 
     createInstanceAtom<V: Object | Function>(
         factory: IInstanceFactory<V>
-    ): Atom<V> {
+    ): Computed<V> {
         return new CellxInstanceAtom(this._cellx, factory)
     }
 
-    createValueAtom<V: Object | Function>(value: V): AtomSetter<V> {
+    createValueAtom<V: Object | Function>(value: V): Atom<V> {
         return new CellxValueAtom(this._cellx, value)
     }
 }

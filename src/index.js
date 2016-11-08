@@ -1,15 +1,11 @@
 // @flow
 
-import DerivablePlugin from './plugins/DerivablePlugin'
-import MobxPlugin from './plugins/MobxPlugin'
 import getAtom from './getAtom'
 import Atmover from './Atmover'
 
 export {
     Atmover,
-    getAtom,
-    DerivablePlugin,
-    MobxPlugin
+    getAtom
 }
 
 export {
@@ -18,5 +14,8 @@ export {
 } from './interfaces'
 
 export type {
-    Atom
+    Computed,
+    Atom,
+    NormalizedAtomArgs,
+    NormalizedAtomArg
 } from './interfaces'

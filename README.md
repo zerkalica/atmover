@@ -11,15 +11,15 @@ Some limitations: Only object and functions as atom values: atmover attaches to 
 <!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [Setup](#setup)
-	- [mobx](#mobx)
-	- [derivable](#derivable)
-	- [cellx](#cellx)
+    - [mobx](#mobx)
+    - [derivable](#derivable)
+    - [cellx](#cellx)
 - [Value get/set](#value-getset)
 - [Get atom from object metadata](#get-atom-from-object-metadata)
 - [Transactions](#transactions)
-- [Computable class](#computable-class)
+- [Computed class](#computable-class)
 - [Objects in constructor arguments](#objects-in-constructor-arguments)
-- [Computable function](#computable-function)
+- [Computed function](#computable-function)
 - [Listen changes](#listen-changes)
 - [Error handling in computable](#error-handling-in-computable)
 - [onUpdate hook](#onupdate-hook)
@@ -34,8 +34,9 @@ Some limitations: Only object and functions as atom values: atmover attaches to 
 ```js
 // @flow
 import {onUpdate, Atmover, getAtom} from 'atmover'
+import type {Atom, Computed} from 'atmover'
+
 import MobxPlugin from 'atmover/MobxPlugin'
-import type {Atom} from 'atmover'
 import * as mobx from 'mobx'
 
 const hotReloadingEnabled = true
@@ -47,8 +48,9 @@ const atmover = new Atmover(new MobxPlugin(mobx), hotReloadingEnabled)
 ```js
 // @flow
 import {Atmover, getAtom} from 'atmover'
+import type {Atom, Computed} from 'atmover'
+
 import CellxPlugin from 'atmover/DerivablePlugin'
-import type {Atom} from 'atmover'
 import derivable from 'derivable'
 
 const hotReloadingEnabled = true
@@ -61,8 +63,9 @@ const atmover = new Atmover(new DerivablePlugin(derivable), hotReloadingEnabled)
 ```js
 // @flow
 import {Atmover, getAtom} from 'atmover'
+import type {Atom, Computed} from 'atmover'
+
 import CellxPlugin from 'atmover/CellxPlugin'
-import type {Atom} from 'atmover'
 import cellx from 'cellx'
 
 const hotReloadingEnabled = true
@@ -107,7 +110,7 @@ atmover.transact(() => {
 })
 ```
 
-## Computable class
+## Computed class
 
 ```js
 // @flow
@@ -120,7 +123,7 @@ class C {
     }
 }
 
-const cAtom: Atom<C> = atmover.construct(C, [aAtom, bAtom])
+const cAtom: Computed<C> = atmover.construct(C, [aAtom, bAtom])
 const c: C = cAtom.get()
 assert(c.v === 14)
 ```
@@ -138,12 +141,12 @@ class C {
     }
 }
 
-const cAtom: Atom<C> = atmover.construct(C, [aAtom, {b: bAtom}])
+const cAtom: Computed<C> = atmover.construct(C, [aAtom, {b: bAtom}])
 const c: C = cAtom.get()
 assert(c.v === 14)
 ```
 
-## Computable function
+## Computed function
 
 ```js
 // @flow
@@ -158,7 +161,7 @@ function factoryC(opts: BOpts): CResult {
     }
 }
 
-const fAtom: Atom<CResult> = atmover.factory(factoryC, [aAtom])
+const fAtom: Computed<CResult> = atmover.factory(factoryC, [aAtom])
 const f: CResult = fAtom.get()
 assert(f.v === 3)
 ```
@@ -193,7 +196,7 @@ class D {
     }
 }
 
-const dAtom: Atom<D> = atmover.construct(C, [aAtom, bAtom])
+const dAtom: Computed<D> = atmover.construct(C, [aAtom, bAtom])
 
 const unsubscribe: () => void = dAtom.subscribe((c: C) => {
     console.log('d.v = ' + d.v)
@@ -235,7 +238,7 @@ class E {
     }
 }
 
-const eAtom: Atom<E> = atmover.construct(E, [aAtom])
+const eAtom: Computed<E> = atmover.construct(E, [aAtom])
 
 const oldValue: E = eAtom.get()
 
@@ -269,7 +272,7 @@ class B2 extends B1 {
         this.v = this.v * 2
     }
 }
-const b1Atom: Atom<B1> = atmover.construct(B1, [aAtom])
+const b1Atom: Computed<B1> = atmover.construct(B1, [aAtom])
 b1Atom.get().v === 10
 
 // Hot reloading:

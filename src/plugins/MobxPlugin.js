@@ -1,6 +1,6 @@
 // @flow
 
-import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
+import type {Computed, Atom, Transact, IInstanceFactory} from '../interfaces'
 import {createAttachMeta, AtomError} from '../pluginHelpers'
 
 interface MobxAtom<V> {
@@ -81,11 +81,11 @@ export default class MobxPlugin {
 
     createInstanceAtom<V: Object | Function>(
         factory: IInstanceFactory<V>
-    ): Atom<V> {
+    ): Computed<V> {
         return new MobxInstanceAtom(this._mobx, factory)
     }
 
-    createValueAtom<V: Object | Function>(value: V): AtomSetter<V> {
+    createValueAtom<V: Object | Function>(value: V): Atom<V> {
         return new MobxValueAtom(this._mobx, value)
     }
 }

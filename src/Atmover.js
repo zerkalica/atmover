@@ -1,6 +1,6 @@
 // @flow
 
-import type {Transact, Atom, Fn, AtmoverPlugin, ProtoCache, AtomSetter, AtomArg, NormalizedAtomArgs} from './interfaces'
+import type {Transact, Computed, Fn, AtmoverPlugin, ProtoCache, Atom, AtomArg, NormalizedAtomArgs} from './interfaces'
 import {fastCreateObject, fastCall} from './fastCreate'
 import {InstanceFactory} from './pluginHelpers'
 
@@ -18,7 +18,7 @@ class FakeAtomSetter<V> {
 }
 
 class FakeProtoCache<V> {
-    get(f: V): AtomSetter<V> {
+    get(f: V): Atom<V> {
         return new FakeAtomSetter(f)
     }
 
@@ -28,16 +28,16 @@ class FakeProtoCache<V> {
 }
 
 class MappedProtoCache<V: Function> {
-    _protos: Map<V, AtomSetter<V>> = new Map()
+    _protos: Map<V, Atom<V>> = new Map()
     _plugin: AtmoverPlugin
 
     constructor(plugin: AtmoverPlugin) {
         this._plugin = plugin
     }
 
-    get(key: V): AtomSetter<V> {
+    get(key: V): Atom<V> {
         const protos = this._protos
-        let atom: ?AtomSetter<V> = protos.get(key)
+        let atom: ?Atom<V> = protos.get(key)
         if (!atom) {
             atom = this._plugin.createValueAtom(key)
             protos.set(key, atom)
@@ -71,7 +71,7 @@ export default class Atmover {
             : new FakeProtoCache()
     }
 
-    value<V: Object>(v: V): AtomSetter<V> {
+    value<V: Object>(v: V): Atom<V> {
         return this._plugin.createValueAtom(v)
     }
 
@@ -79,13 +79,13 @@ export default class Atmover {
         this._protoCache.set(from, to)
     }
 
-    construct<V: Object>(p: Class<V>, args?: (AtomArg[] | NormalizedAtomArgs)): Atom<V> {
+    construct<V: Object>(p: Class<V>, args?: (AtomArg[] | NormalizedAtomArgs)): Computed<V> {
         return this._plugin.createInstanceAtom(
             new InstanceFactory(args, this._protoCache.get(p), fastCreateObject)
         )
     }
 
-    factory<V: Object>(p: Fn<V>, args?: (AtomArg[] | NormalizedAtomArgs)): Atom<V> {
+    factory<V: Object>(p: Fn<V>, args?: (AtomArg[] | NormalizedAtomArgs)): Computed<V> {
         return this._plugin.createInstanceAtom(
             new InstanceFactory(args, this._protoCache.get(p), fastCall)
         )

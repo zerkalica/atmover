@@ -1,6 +1,6 @@
 // @flow
 
-import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
+import type {Computed, Atom, Transact, IInstanceFactory} from '../interfaces'
 import {createAttachMeta, AtomError} from '../pluginHelpers'
 
 interface LifeCycle {
@@ -98,11 +98,11 @@ export default class DerivablePlugin {
 
     createInstanceAtom<V: Object | Function>(
         factory: IInstanceFactory<V>
-    ): Atom<V> {
+    ): Computed<V> {
         return new DerivableInstanceAtom(this._derivable, factory)
     }
 
-    createValueAtom<V: Object | Function>(value: V): AtomSetter<V> {
+    createValueAtom<V: Object | Function>(value: V): Atom<V> {
         return new DerivableValueAtom(this._derivable, value)
     }
 }

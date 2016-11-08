@@ -1,7 +1,7 @@
 // @flow
 
 import {metaKey, onUpdate} from './interfaces'
-import type {AtomGetter, Atom, AtomArg, NormalizedAtomArg, NormalizedAtomArgs} from './interfaces'
+import type {AtomGetter, Computed, AtomArg, NormalizedAtomArg, NormalizedAtomArgs} from './interfaces'
 
 type AttachMeta<V> = (value: V, deps?: ?mixed[]) => V
 
@@ -104,7 +104,7 @@ export class InstanceFactory<V: Object> {
         this._create = create
     }
 
-    setAtom(atom: Atom<V>): InstanceFactory<V> {
+    setAtom(atom: Computed<V>): InstanceFactory<V> {
         this._attachMeta = createAttachMeta(atom)
         return this
     }
