@@ -3,11 +3,11 @@
 import type {Atom, AtomSetter, Transact, IInstanceFactory} from '../interfaces'
 import {createAttachMeta} from '../pluginHelpers'
 
-interface CellxEvent<V> {
+type CellxEvent<V> = {
+    type: 'change';
     oldValue: V;
     value: V;
 }
-
 type ListenerName = 'addChangeListener' | 'removeChangeListener'
 type CellxListener<V> = (eventName: ListenerName, fn: (event: CellxEvent<V>) => void) => void
 type CellxSet<V> = (v: V) => void
@@ -15,7 +15,7 @@ type CellxGet<V> = () => V
 
 type CellxAtom<V> = CellxListener<V> | CellxSet<V> | CellxGet<V>
 
-type Cellx = () => CellxAtom<any>
+type Cellx<V> = (v: V) => CellxAtom<any>
 
 class BoxedValue<V> {
     v: V
@@ -29,7 +29,7 @@ class CellxValueAtom<V: Object | Function> {
     _attachMeta: (value: V) => V
 
     constructor(
-        cellx: Cellx,
+        cellx: Cellx<*>,
         value: V
     ) {
         this._attachMeta = createAttachMeta(this)
@@ -50,16 +50,12 @@ class CellxInstanceAtom<V: Object | Function> {
     _factory: IInstanceFactory<V>
 
     constructor(
-        cellx: Cellx,
+        cellx: Cellx<*>,
         factory: IInstanceFactory<V>
     ) {
         factory.setAtom(this)
         this._factory = factory
         this._value = cellx(factory.get)
-    }
-
-    set(_opts: V): void {
-        throw new Error('Can\'t set value on derivable, use source instead')
     }
 
     get(): V {
@@ -88,10 +84,10 @@ class CellxInstanceAtom<V: Object | Function> {
 }
 
 export default class CellxPlugin {
-    _cellx: Cellx
+    _cellx: Cellx<*>
     transact: Transact
 
-    constructor(cellx: Cellx) {
+    constructor(cellx: Cellx<*>) {
         this._cellx = cellx
         cellx.configure({asynchronous: false})
         this.transact = cellx.transact

@@ -64,10 +64,6 @@ class DerivableInstanceAtom<V: Object | Function> {
         this._factory = factory
     }
 
-    set(_opts: V): void {
-        throw new Error('Can\'t set value on derivable, use source instead')
-    }
-
     get(): V {
         const value = this._value.get()
         if (value instanceof AtomError) {
